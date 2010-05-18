@@ -1,0 +1,19 @@
+Source: openredalert
+Section: user/games
+Priority: optional
+Maintainer: Tomasz Sterna <tomek@xiaoka.com>
+Build-Depends: debhelper (>= 5), libsdl1.2-dev, libsdl-mixer1.2-dev
+Standards-Version: 3.7.2
+Vcs-Git: git://github.com/smokku/ora.git
+Vcs-Browser: http://github.com/smokku/ora
+Homepage: http://wiki.github.com/smokku/ora/
+
+Package: openredalert
+Architecture: any
+Depends: ${shlibs:Depends}, openredalert-data
+Description: Real Time Strategy game.
+XSBC-Bugtracker: http://github.com/smokku/ora/issues
+XB-Maemo-Display-Name: OpenRedAlert
+ This is a rebuild of the (Westwood) Red Alert game engine (based on FreeCNC
+ and FreeRA). It is a real time strategy game. To play the game with this
+ engine you need the original game (mix files).
