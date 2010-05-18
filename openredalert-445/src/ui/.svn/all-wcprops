@@ -1,0 +1,287 @@
+K 25
+svn:wc:ra_dav:version-url
+V 30
+/svn/!svn/ver/445/trunk/src/ui
+END
+CursorInfo.h
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/402/trunk/src/ui/CursorInfo.h
+END
+FontCache.h
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/402/trunk/src/ui/FontCache.h
+END
+RaWindow.h
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/402/trunk/src/ui/RaWindow.h
+END
+createmode_t.h
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/402/trunk/src/ui/createmode_t.h
+END
+DropDownListBox.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/402/trunk/src/ui/DropDownListBox.cpp
+END
+TFontImage.h
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/402/trunk/src/ui/TFontImage.h
+END
+Input.h
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/!svn/ver/402/trunk/src/ui/Input.h
+END
+RA_Label.h
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/402/trunk/src/ui/RA_Label.h
+END
+Font.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/402/trunk/src/ui/Font.cpp
+END
+PauseMenu.h
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/402/trunk/src/ui/PauseMenu.h
+END
+Menu.h
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/!svn/ver/444/trunk/src/ui/Menu.h
+END
+SidebarButton.h
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/402/trunk/src/ui/SidebarButton.h
+END
+TCheckBox.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/402/trunk/src/ui/TCheckBox.cpp
+END
+ListboxClass.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/402/trunk/src/ui/ListboxClass.cpp
+END
+Button.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/402/trunk/src/ui/Button.cpp
+END
+CursorPool.h
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/402/trunk/src/ui/CursorPool.h
+END
+sidebarop.h
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/402/trunk/src/ui/sidebarop.h
+END
+RA_ProgressBar.h
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/402/trunk/src/ui/RA_ProgressBar.h
+END
+TTextBox.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/402/trunk/src/ui/TTextBox.cpp
+END
+Cursor.h
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/402/trunk/src/ui/Cursor.h
+END
+selection.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/416/trunk/src/ui/selection.cpp
+END
+FontOptions.h
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/402/trunk/src/ui/FontOptions.h
+END
+SidebarError.h
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/402/trunk/src/ui/SidebarError.h
+END
+CursorInfo.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/402/trunk/src/ui/CursorInfo.cpp
+END
+SidebarGeometry.h
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/402/trunk/src/ui/SidebarGeometry.h
+END
+FontCache.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/402/trunk/src/ui/FontCache.cpp
+END
+Selection.h
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/402/trunk/src/ui/Selection.h
+END
+RaWindow.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/402/trunk/src/ui/RaWindow.cpp
+END
+Input.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/445/trunk/src/ui/Input.cpp
+END
+ListBoxLine.h
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/402/trunk/src/ui/ListBoxLine.h
+END
+RA_Label.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/402/trunk/src/ui/RA_Label.cpp
+END
+PauseMenu.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/441/trunk/src/ui/PauseMenu.cpp
+END
+Menu.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/444/trunk/src/ui/Menu.cpp
+END
+SidebarButton.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/402/trunk/src/ui/SidebarButton.cpp
+END
+DropDownListBox.h
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/402/trunk/src/ui/DropDownListBox.h
+END
+CursorPool.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/402/trunk/src/ui/CursorPool.cpp
+END
+sidebar.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/439/trunk/src/ui/sidebar.cpp
+END
+RA_ProgressBar.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/429/trunk/src/ui/RA_ProgressBar.cpp
+END
+Font.h
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/!svn/ver/402/trunk/src/ui/Font.h
+END
+Cursor.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/402/trunk/src/ui/Cursor.cpp
+END
+Sidebar.h
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/!svn/ver/402/trunk/src/ui/Sidebar.h
+END
+TCheckBox.h
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/402/trunk/src/ui/TCheckBox.h
+END
+logger.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/439/trunk/src/ui/logger.cpp
+END
+ListboxClass.h
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/402/trunk/src/ui/ListboxClass.h
+END
+Button.h
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/402/trunk/src/ui/Button.h
+END
+SidebarError.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/402/trunk/src/ui/SidebarError.cpp
+END
+TTextBox.h
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/402/trunk/src/ui/TTextBox.h
+END

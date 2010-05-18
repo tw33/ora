@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 33
+/svn/!svn/ver/433/trunk/src/audio
+END
+SoundUtils.h
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/396/trunk/src/audio/SoundUtils.h
+END
+SoundEngine.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/404/trunk/src/audio/SoundEngine.cpp
+END
+SOUND_DECODE_STATE.h
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/410/trunk/src/audio/SOUND_DECODE_STATE.h
+END
+SoundCache.h
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/396/trunk/src/audio/SoundCache.h
+END
+SoundError.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/396/trunk/src/audio/SoundError.cpp
+END
+SoundEngine.h
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/404/trunk/src/audio/SoundEngine.h
+END
+SoundCommon.h
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/433/trunk/src/audio/SoundCommon.h
+END
+SoundError.h
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/!svn/ver/396/trunk/src/audio/SoundError.h
+END
+SoundBuffer.h
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/404/trunk/src/audio/SoundBuffer.h
+END
+SoundFile.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/404/trunk/src/audio/SoundFile.cpp
+END
+SoundUtils.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/396/trunk/src/audio/SoundUtils.cpp
+END
+SoundFile.h
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/!svn/ver/396/trunk/src/audio/SoundFile.h
+END
