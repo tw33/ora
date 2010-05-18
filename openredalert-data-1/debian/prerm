@@ -1,0 +1,24 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    remove|deconfigure)
+    	rm -f /usr/share/games/openra/data/mix/REDALERT.MIX
+    	rm -f /usr/share/games/openra/data/mix/MAIN.MIX
+    ;;
+
+    upgrade)
+    ;;
+
+    failed-upgrade)
+    ;;
+    
+    *)
+        echo "prerm called with unknown argument \`$1'" >&2
+        exit 0
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0

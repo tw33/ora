@@ -1,0 +1,17 @@
+Source: openredalert-data
+Section: games
+Priority: optional
+Maintainer: Patryk Skorupa (skoruppa) <skoruppa@gmail.com>
+Build-Depends: debhelper (>= 4.0.0), po-debconf
+Standards-Version: 3.7.2
+
+Package: openredalert-data
+Architecture: all
+Depends: debconf (>= 0.5.00)
+Suggests: ioquake3
+Description: Installer for Open Red Alert data files
+ This package installs the Red Aler data files into your Ubuntu system.
+ .
+ For the installation you will need your Red Alert CD-ROM.
+ .
+ The installed data will take about 458 MB of disk space.

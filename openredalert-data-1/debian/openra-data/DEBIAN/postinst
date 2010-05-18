@@ -1,0 +1,51 @@
+#!/bin/sh
+# postinst script for openra-data
+set -e
+
+MIX=/usr/share/games/openra/data/mix
+
+. /usr/share/debconf/confmodule
+
+case "$1" in
+	configure)
+		db_get openra-data/install
+		if [ "$RET" != "true" ]; then
+			exit 0
+		fi
+		
+		db_get openra-data/cdrom
+		CDROM=$RET
+		
+		# Check if CD-ROM is mounted.
+		if [ ! -f $CDROM/INSTALL/REDALERT.MIX ]; then
+			
+				echo -e "Unable to find necessary files!\nIs the Red Alert CD-ROM mounted?\nInstallation of the Red Alert data files failed!"
+				exit 0
+			
+		fi
+
+		# copy REDALERT.MIX and MAIN.MIX from the CD-ROM
+			cp -f $CDROM/INSTALL/REDALERT.MIX $MIX
+			cp -f $CDROM/MAIN.MIX $MIX
+
+
+		# fix permissions
+		chmod u+w,a-x $MIX/REDALERT.MIX
+		chmod u+w,a-x $MIX/MAIN.MIX
+	
+		
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 0
+    ;;
+esac
+
+
+
+exit 0

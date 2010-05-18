@@ -1,0 +1,12 @@
+This is quake3-data, written and maintained by 
+Bruno "Fuddl" Kleinert <fuddl@gmx.de> on Tue, 4 Oct 2005 21:53:22 +0200.
+
+The original source can always be found at:
+	svn://svn.debian.org/svn/pkg-games/packages/trunk/quake3-data
+
+This package is a modified version of the quake2-data package by Jamie
+Wilkinson. Thanks for his helpful work!
+
+This installer package is copyright (C) 2005  Bruno "Fuddl" Kleinert and is licensed
+under the GNU GPL version 2; you can read this in the usual location on Debian
+systems: /usr/share/common-licenses/GPL

@@ -1,0 +1,12 @@
+Template: openra-data/install
+Type: boolean
+Default: true
+_Description: Do you want to install Open Red Alert data files, now?
+ For the installation process you will need your Red Alert CD-ROM.
+
+Template: openra-data/cdrom
+Type: string
+Default: /media/cdrom0
+_Description: Mount location of the Red Alert CD-ROM:
+ Type the name of the mount point of your CD-ROM. If you have not yet
+ mounted the CD-ROM, you should do that, now.

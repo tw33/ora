@@ -1,0 +1,87 @@
+#!/bin/sh
+# postinst script for quake3-data
+set -e
+
+POINTFILE=linuxq3apoint-1.32b-3.x86.run
+POINTMD5=c71fdddccb20e8fc393d846e9c61d685
+Q3TGZ=quake3.tar.gz
+STORAGE=/root
+BASEQ3=/usr/share/games/quake3/baseq3
+
+. /usr/share/debconf/confmodule
+
+case "$1" in
+	configure)
+		db_get quake3-data/install
+		if [ "$RET" != "true" ]; then
+			exit 0
+		fi
+		
+		db_get quake3-data/cdrom
+		CDROM=$RET
+		
+		# Check if CD-ROM is mounted.
+		if [ ! -f $CDROM/Quake3/baseq3/pak0.pk3 ]; then # regular q3 cd
+			if [ ! -f $CDROM/baseq3/pak0.pk3 ]; then # loki q3 cd
+				echo -e "Unable to find necessary files!\nIs the (Loki) Quake III Arena CD-ROM mounted?\nInstallation of the Quake III Arena data files failed!"
+				exit 0
+			fi
+		fi
+
+		# copy pak0.pk3 from the (Loki) CD-ROM
+		if [ -f $CDROM/Quake3/baseq3/pak0.pk3 ]; then
+			cp -f $CDROM/Quake3/baseq3/pak0.pk3 $BASEQ3
+		else
+			cp -f $CDROM/baseq3/pak0.pk3 $BASEQ3
+		fi
+
+		# fix permissions
+		chmod u+w,a-x $BASEQ3/pak0.pk3
+	
+		db_get quake3-data/mirror
+		MIRROR=$RET
+		
+		if [ ! -f $STORAGE/$POINTFILE ]; then
+			# file doesn't exist, so get it
+			wget -O $STORAGE/$POINTFILE $MIRROR/$POINTFILE
+		else
+			# file exists, but better md5-check it to be sure
+			if [ ! `md5sum $STORAGE/$POINTFILE | cut -f1 -d' '` = $POINTMD5 ]; then
+				rm -f $STORAGE/$POINTFILE
+				wget -O $STORAGE/$POINTFILE $MIRROR/$POINTFILE
+			fi
+		fi
+		
+		# Extract the tarball from the Loki Installer
+		dd if=$STORAGE/$POINTFILE of=$STORAGE/$Q3TGZ ibs=1 obs=1024 skip=8251 > /dev/null 2>&1
+		mkdir -p $STORAGE/quake3
+		tar -C $STORAGE/quake3 -xzf $STORAGE/$Q3TGZ
+		
+		# Copy pk3's from the pointrelease
+		cp -f $STORAGE/quake3/baseq3/pak1.pk3 $BASEQ3
+		cp -f $STORAGE/quake3/baseq3/pak2.pk3 $BASEQ3
+		cp -f $STORAGE/quake3/baseq3/pak3.pk3 $BASEQ3
+		cp -f $STORAGE/quake3/baseq3/pak4.pk3 $BASEQ3
+		cp -f $STORAGE/quake3/baseq3/pak5.pk3 $BASEQ3
+		cp -f $STORAGE/quake3/baseq3/pak6.pk3 $BASEQ3
+		cp -f $STORAGE/quake3/baseq3/pak7.pk3 $BASEQ3
+		cp -f $STORAGE/quake3/baseq3/pak8.pk3 $BASEQ3
+		
+		# ... clean up...
+		rm $STORAGE/quake3.tar.gz
+		rm -rf $STORAGE/quake3
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 0
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0

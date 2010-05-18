@@ -1,0 +1,9 @@
+quake3-data (1) UNRELEASED; urgency=low
+
+  [ Bruno "Fuddl" Kleinert ]
+  * Initial Release (Closes: #337938)
+
+  [ Eddy Petrișor ]
+  * debconf template fixes
+
+ -- Bruno "Fuddl" Kleinert <fuddl@gmx.de>  Thu,  5 Oct 2006 23:07:05 +0300

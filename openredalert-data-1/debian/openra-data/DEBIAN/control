@@ -1,0 +1,16 @@
+Package: openra-data
+Source: openredalert-data
+Version: 1-1
+Architecture: all
+Maintainer: Patryk Skorupa (skoruppa) <skoruppa@gmail.com>
+Installed-Size: 72
+Depends: debconf (>= 0.5.00)
+Suggests: ioquake3
+Section: games
+Priority: optional
+Description: Installer for Open Red Alert data files
+ This package installs the Red Aler data files into your Ubuntu system.
+ .
+ For the installation you will need your Red Alert CD-ROM.
+ .
+ The installed data will take about 458 MB of disk space.

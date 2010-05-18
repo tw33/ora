@@ -1,0 +1,17 @@
+README.Debian for openra-data
+-----------------------------
+
+This package facilitates the installation of the Red Aler data onto your
+Debian system.
+
+If you upgrade or reinstall this package, you currently need to have the
+CD-ROM and downloaded files mounted and in the same location as they were
+for the first install, otherwise the installer will break. If you want to
+change the location of installables, then use dpkg-reconfigure openra-data
+before upgrading.
+
+The downloaded pointrelease file WILL NOT be deleted by this script. The
+author of this package thinks this behaviour is useful if you want to
+reconfigure or reinstall this package.
+
+ -- Patryk "Skoruppa" Skorupa <skoruppa@gmail.com>

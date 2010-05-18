@@ -1,0 +1,10 @@
+This is openra-data, written and maintained by 
+Patryk "Skoruppa" Skorupa <skoruppa@gmail.com> on Fri, 12 Sep 2008 11:14:54 +0200.
+
+
+This package is a modified version of the quake2-data package by Jamie
+Wilkinson. Thanks for his helpful work!
+
+This installer package is copyright (C) 2008  Patryk "Skoruppa" Skorupa and is licensed
+under the GNU GPL version 3; you can read this in the usual location on Debian
+systems: /usr/share/common-licenses/GPL
