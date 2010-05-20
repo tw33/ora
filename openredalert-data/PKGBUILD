@@ -19,12 +19,12 @@ build() {
 	unrar x RedAlert1_SovietDisc.rar
 	cd ${srcdir}/RedAlert1_SovietDisc/RedAlert1_SovietDisc
 	isoinfo -l -R -i CD2_SOVIET_DISC.ISO -l | uniso -R -i CD2_SOVIET_DISC.ISO
-	install -D -m 644 'INSTALL/REDALERT.MIX;1' ${pkgdir}/usr/share/openredalert/data/mix/REDALERT-SovietAlliedDisc.mix
-	install -D -m 644 'MAIN.MIX;1' ${pkgdir}/usr/share/openredalert/data/mix/MAIN-SovietDisc.mix
+	install -D -m 644 'INSTALL/REDALERT.MIX;1' ${pkgdir}/usr/share/openredalert/data/mix/RUSSIAN.MIX
+	install -D -m 644 'MAIN.MIX;1' ${pkgdir}/usr/share/openredalert/data/mix/MAIN.MIX
 	install -D -m 644 'Copy of EA Product EULA RedAlert1.rtf' ${pkgdir}/usr/share/openredalert/data/mix/EA_Product_EULA_RedAlert1.rtf
 	cd ${srcdir}
 	unrar x RedAlert1_AlliedDisc.rar
 	cd ${srcdir}/RedAlert1_AlliedDisc/RedAlert1_AlliedDisc
 	isoinfo -l -R -i CD1_ALLIED_DISC.ISO | uniso -R -i CD1_ALLIED_DISC.ISO
-	install -D -m 644 'MAIN.MIX;1' ${pkgdir}/usr/share/openredalert/data/mix/MAIN-AlliedDisc.mix
+	install -D -m 644 'MAIN.MIX;1' ${pkgdir}/usr/share/openredalert/data/mix/ALLIES.MIX
 	}

@@ -133,7 +133,7 @@ openredalert_SOURCES= \
     src/game/RQstate.h \
     src/game/SnowMissionTheater.cpp \
     src/game/SnowMissionTheater.h \
-    src/game/structure.cpp \
+    src/game/Structure.cpp \
     src/game/Structure.h \
     src/game/StructureType.cpp \
     src/game/StructureType.h \
