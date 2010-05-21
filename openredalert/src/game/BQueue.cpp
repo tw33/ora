@@ -1,5 +1,6 @@
 // BQueue.cpp
-//
+// 1.4
+
 //    This file is part of OpenRedAlert.
 //
 //    OpenRedAlert is free software: you can redistribute it and/or modify
@@ -16,9 +17,9 @@
 
 #include "BQueue.h"
 
+#include <cassert>
 #include <stdexcept>
 #include <string>
-#include <algorithm> // for find()
 
 #include "audio/SoundEngine.h"
 #include "Dispatcher.h"
@@ -32,8 +33,7 @@
 #include "Player.h"
 #include "BQTimer.h"
 #include "RQstate.h"
-#include "misc/config.h"
-#include "CnCMap.h"
+#include "include/config.h"
 
 namespace pc {
 	extern Sound::SoundEngine* sfxeng;
@@ -42,7 +42,7 @@ namespace pc {
 namespace p {
 	extern Dispatcher* dispatcher;
 	extern ActionEventQueue* aequeue;
-	extern CnCMap* ccmap;
+	extern PlayerPool* ppool;
 }
 extern Logger * logger;
 
@@ -74,7 +74,7 @@ bool BQueue::Add(const UnitOrStructureType * type)
             break;
         case BQ_EMPTY:        
             if (0 == (left = type->getCost())) {
-                logger->error("Type \"%s\" has no cost\n", type->getName().c_str());
+                logger->error("Type \"%s\" has no cost\n", type->getTName());
             }
             last = p::aequeue->getCurtick();
             production.insert(Production::value_type(type, 1));
@@ -98,7 +98,7 @@ bool BQueue::Add(const UnitOrStructureType * type)
                 if (p::dispatcher->unitSpawn((UnitType *) type, player->getPlayerNum())) {
                     Placed();
                 } else {
-                    logger->debug("Didn't spawn %s...\n", type->getName().c_str());
+                    logger->debug("Didn't spawn %s...\n", type->getTName());
                 }
             }
             return false;
@@ -114,7 +114,7 @@ bool BQueue::Add(const UnitOrStructureType * type)
                     // This type is new to the queue
                     if (0 == type->getCost()) {
                         // We divide by cost, so must not be zero.
-                        logger->error("Type \"%s\" has no cost\n", type->getName().c_str());
+                        logger->error("Type \"%s\" has no cost\n", type->getTName());
                         return false;
                     }
                     production.insert(Production::value_type(type, 1));
@@ -150,7 +150,7 @@ ConStatus BQueue::PauseCancel(const UnitOrStructureType * type)
         switch (status) {
             case BQ_RUNNING:
                 status = BQ_PAUSED;
-                p::ccmap->getPlayerPool()->updateSidebar();
+                p::ppool->updateSidebar();
                 return status;
                 break;
             case BQ_READY:
@@ -181,7 +181,7 @@ ConStatus BQueue::PauseCancel(const UnitOrStructureType * type)
         }
     }
 
-    p::ccmap->getPlayerPool()->updateSidebar();
+    p::ppool->updateSidebar();
     return BQ_CANCELLED;
 }
 
@@ -216,7 +216,7 @@ ConStatus BQueue::getStatus(const UnitOrStructureType * type, Uint8 * quantity, 
  */
 void BQueue::Placed() 
 {
-    p::ccmap->getPlayerPool()->updateSidebar();
+    p::ppool->updateSidebar();
     status = BQ_RUNNING;
     next();
 }
@@ -225,7 +225,7 @@ void BQueue::Pause()
 {
     if (status == BQ_RUNNING) {
         status = BQ_ALL_PAUSED;
-        p::ccmap->getPlayerPool()->updateSidebar();
+        p::ppool->updateSidebar();
     }
 }
 
@@ -246,22 +246,9 @@ const UnitOrStructureType * BQueue::getCurrentType() const
 
 void BQueue::next() 
 {
-    // Check that queue is not empty
-    if (queue.empty())
-    {
-        logger->error("[BQueue::next()] queue is empty !");
-        return;
-    }
-    
+    assert(!queue.empty());
     Production::iterator it = production.find(getCurrentType());
-    
-    // Check that it is not at the end
-    if (it == production.end())
-    {
-        logger->error("[BQueue::next()] iterator is at the end !");
-        return;
-    }
-    
+    assert(it != production.end());
     if (it->second <= 1) {
         production.erase(it);
         queue.pop_front();
@@ -273,13 +260,7 @@ void BQueue::next()
             // the next item in the queue and start building
             status = BQ_RUNNING;
             it = production.find(getCurrentType());
-            
-            // Check that it is not at the end
-            if (it == production.end())
-            {
-                logger->error("[BQueue::next()] iterator is at the end !");
-                return;
-            }
+            assert(it != production.end());
         }
     } else {
         --it->second;
@@ -287,7 +268,7 @@ void BQueue::next()
     left = it->first->getCost();
     last = p::aequeue->getCurtick();
     timer->Reshedule();
-    p::ccmap->getPlayerPool()->updateSidebar();
+    p::ppool->updateSidebar();
 }
 
 RQstate BQueue::requeue(const UnitOrStructureType * type) 
@@ -335,7 +316,7 @@ bool BQueue::tick()
     left -= delta;
 
     if (0 != left) {
-        p::ccmap->getPlayerPool()->updateSidebar();
+        p::ppool->updateSidebar();
         return true;
     }
     const UnitOrStructureType * type = getCurrentType();
@@ -356,7 +337,7 @@ bool BQueue::tick()
         // Play "construction complete" sound
         pc::sfxeng->PlaySound(pc::Config.StructureReady);
     }
-    p::ccmap->getPlayerPool()->updateSidebar();
+    p::ppool->updateSidebar();
     return false;
 }
 

@@ -25,15 +25,14 @@
 #include "SDL/SDL_timer.h"
 #include "SDL/SDL_video.h"
 
-#include "misc/common.h"
-#include "misc/config.h"
+#include "include/common.h"
+#include "include/config.h"
 #include "include/Logger.h"
 #include "game/CnCMap.h"
 #include "game/PlayerPool.h"
 #include "game/Player.h"
 #include "game/Unit.hpp"
 #include "game/UnitAndStructurePool.h"
-#include "game/StructureType.h"
 #include "audio/SoundEngine.h"
 #include "include/sdllayer.h"
 #include "misc/StringTableFile.h"
@@ -47,9 +46,7 @@
 #include "ImageCacheEntry.h"
 #include "Dune2Image.h"
 
-#ifndef VERSION
-#define VERSION "6xx"
-#endif
+#define VERSION "439"
 
 using std::string;
 using std::runtime_error;
@@ -282,7 +279,7 @@ void GraphicsEngine::setupCurrentGame()
 
 /**
  * Render a scene complete with map, sidebar and cursor.
- *
+ * this is drawing the screen on each game cycle isnt it?
  * @param flipscreen true if flip screen function will be call
  */
 void GraphicsEngine::renderScene(bool flipscreen)
@@ -293,12 +290,10 @@ void GraphicsEngine::renderScene(bool flipscreen)
 	SDL_Rect src = {0, 0, 0, 0};
 	SDL_Rect udest = {0, 0, 0, 0};
 
-#ifdef _MSC_VER
 	//VS will cry if you try to use these variables that were not initialized
 	dest.h = dest.w = src.h = src.w = udest.h = udest.w = 0;
 	dest.x = dest.y = src.x = src.y = udest.x = udest.y = 0;
-#endif
-        
+
 	// remove the old mousecursor
 //	SDL_FillRect(screen, &oldmouse, blackpix);
 
@@ -586,10 +581,10 @@ void GraphicsEngine::DrawMinimap()
 	Player* 	lplayer;
 
 	// Get the Local player
-	lplayer = p::ccmap->getPlayerPool()->getLPlayer();
+	lplayer = p::ppool->getLPlayer();
 
 	// Get the visibility of the local player
-	vector<bool>* mapvis = lplayer->getMapVis();
+	vector<bool>& mapvis = lplayer->getMapVis();
 
     // draw minimap
     if (lplayer->getNumberRadars()>0 && !pc::sidebar->isRadaranimating())
@@ -603,7 +598,7 @@ void GraphicsEngine::DrawMinimap()
         bool blocked;
 
         // Need the exact dimensions in tiles
-        // @todo Positioning needs tweaking
+        // @TODO Positioning needs tweaking
         SDL_Surface *minimap = p::ccmap->getMiniMap(minizoom);
         // Draw black under minimap if haven't previously drawn (or was drawn,
         // then disabled, then reenabled).
@@ -633,25 +628,27 @@ void GraphicsEngine::DrawMinimap()
         minx = min(curpos%mapwidth, mapwidth - clip.tilew);
         cury = min(curpos/mapwidth, mapheight - clip.tileh);
         curpos = minx+cury*mapwidth;
-        
-        for (ypos = 0; ypos < clip.tileh ; ++ypos) 
-        {
+        for (ypos = 0; ypos < clip.tileh ; ++ypos) {
             for (xpos = 0 ; xpos < clip.tilew ; ++xpos) 
-            {
-                if (mapvis->at(curpos)) {
- 			float width, height;
-			Uint8 igroup, owner, pcol;
-			Uint32 cellpos;
+			{
+                if (mapvis[curpos])			//here an VS assert is triggered of std::vector/std::iterator: a mapvis of size 1216 is written out of bounds!
+				{
+ 					float width, height;
+					Uint8 igroup, owner, pcol;
+					Uint32 cellpos;
 
 			// This is needed to prevent buildings/units be drawn outside the radar area
-			if (xpos < clip.tilew && ypos < clip.tileh){
+			if (xpos < clip.tilew && ypos < clip.tileh)
+			{
 				// Rather than make the graphics engine depend on the
 				// UnitOrStructureType, just pull what we need from the
 				// USPool.
 				if (p::uspool->getUnitOrStructureLimAt(curpos, &width,
-					&height, &cellpos, &igroup, &owner, &pcol, &blocked)) {
+					&height, &cellpos, &igroup, &owner, &pcol, &blocked)) 
+				{
 					/// @todo drawing infanty groups as smaller pixels
-					if (blocked) {
+					if (blocked) 
+					{
 						dest.x = maparea.x+maparea.w+clip.x+xpos*minizoom;
 						dest.y = maparea.y+clip.y+ypos*minizoom;
 						dest.w = (Uint16)ceil(width*minizoom);
@@ -821,9 +818,8 @@ void GraphicsEngine::DrawRepairing()
 		}
 
 		// Draw the repair icon (animation)
-                StructureType* theType = dynamic_cast<StructureType*>(str->getType());
-		udest.x = xpos + (theType->getXsize() * tilewidth/2)- (RepairImg->w/2); //+ (str->getType()->getXsize() * tilewidth)
-		udest.y = ypos + (theType->getYsize() * tileheight/2) - (RepairImg->h/2); // + (str->getType()->getYsize() * tileheight)
+		udest.x = xpos + (str->getType()->getXsize() * tilewidth/2)- (RepairImg->w/2); //+ (str->getType()->getXsize() * tilewidth)
+		udest.y = ypos + (str->getType()->getYsize() * tileheight/2) - (RepairImg->h/2)/* + (str->getType()->getYsize() * tileheight) */;
 		udest.w = RepairImg->w;
 		udest.h = RepairImg->h;
 		SDL_UpperBlit(RepairImg, 0, screen, &udest);
@@ -866,8 +862,8 @@ void GraphicsEngine::DrawBombing()
 		if (str->isBombing()==false){
 			continue;
 		}
-		//printf("str bb = %s\n",
-		//		p::uspool->getStructure(i)->getType()->getTName());
+		printf("str bb = %s\n",
+				p::uspool->getStructure(i)->getType()->getTName());
 
 		// Load the bombing icon image (displayed while bombing a structure)
 		if (bombing_icon == 0){
@@ -899,9 +895,8 @@ void GraphicsEngine::DrawBombing()
 		}
 
 		// Draw the repair icon (animation)
-                StructureType* theType = dynamic_cast<StructureType*>(str->getType());
-		udest.x = xpos + (theType->getXsize() * tilewidth - bombImage->w)/2; //+ (str->getType()->getXsize() * tilewidth)
-		udest.y = ypos + (theType->getYsize() * tileheight - bombImage->h)/2; /* + (str->getType()->getYsize() * tileheight) */
+		udest.x = xpos + (str->getType()->getXsize() * tilewidth - bombImage->w)/2; //+ (str->getType()->getXsize() * tilewidth)
+		udest.y = ypos + (str->getType()->getYsize() * tileheight - bombImage->h)/2; /* + (str->getType()->getYsize() * tileheight) */
 		udest.w = bombImage->w;
 		udest.h = bombImage->h;
 		// Draw the icon
@@ -1092,9 +1087,8 @@ void GraphicsEngine::DrawGroundUnitHealthBars(SDL_Rect dest, SDL_Rect udest, Uin
 			}
 
 			// Draw the harvester contents (if needed)
-			if ((un->isSelected()) && (un->getType()->getName() == "HARV"))
-			{
-				if (un->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum()){
+			if (un->isSelected() && strcmp (un->getType()->getTName(), "HARV") == 0){
+				if (un->getOwner() == p::ppool->getLPlayerNum()){
 					Uint8 ResourceType;
 					Uint8 NumbResources = un->GetNumResources ();
 					for (int k = 0; k < 5; k++){
@@ -1234,12 +1228,11 @@ void GraphicsEngine::DrawL2Overlays()
 void GraphicsEngine::DrawFogOfWar(SDL_Rect dest, SDL_Rect src, SDL_Rect udest)
 {
 	Uint32				curpos;
-	Player				*lplayer = p::ccmap->getPlayerPool()->getLPlayer();
+	Player				*lplayer = p::ppool->getLPlayer();
+	std::vector<bool>	&mapvis = lplayer->getMapVis();
 	int					i;
 	Uint16				mapWidth;
 	Uint16				mapHeight;
-
-    vector<bool>* mapvis = lplayer->getMapVis();
 
     mapWidth = (maparea.w+p::ccmap->getXTileScroll()+tilewidth-1)/tilewidth;
     mapWidth = min(mapWidth, p::ccmap->getWidth());
@@ -1264,8 +1257,7 @@ void GraphicsEngine::DrawFogOfWar(SDL_Rect dest, SDL_Rect src, SDL_Rect udest)
 			udest.y = dest.y;
 			udest.w = tilewidth;
 			udest.h = tilewidth;
-			if (mapvis->at(curpos)) 
-                        {
+			if (mapvis[curpos]) {
 				src.x = 0;
 				src.y = 0;
 				src.w = tilewidth;
@@ -1274,19 +1266,19 @@ void GraphicsEngine::DrawFogOfWar(SDL_Rect dest, SDL_Rect src, SDL_Rect udest)
 				i = 0;
 
 				// tile above this one is not visible
-				if (curpos >= p::ccmap->getWidth() && !mapvis->at(curpos - p::ccmap->getWidth())) {
+				if (curpos >= p::ccmap->getWidth() && !mapvis[curpos-p::ccmap->getWidth()]) {
 					i |= 1;
 				}
 				// tile next to this one (right) is not visible
-				if (curpos%p::ccmap->getWidth() < (Uint16)(p::ccmap->getWidth()-1) && !mapvis->at(curpos + 1)) {
+				if (curpos%p::ccmap->getWidth() < (Uint16)(p::ccmap->getWidth()-1) && !mapvis[curpos+1]) {
 					i |= 2;
 				}
 				// tile below this one is not visible
-				if (curpos < (Uint32)p::ccmap->getWidth()*(p::ccmap->getHeight()-1) && !mapvis->at(curpos + p::ccmap->getWidth())) {
+				if (curpos < (Uint32)p::ccmap->getWidth()*(p::ccmap->getHeight()-1) && !mapvis[curpos+p::ccmap->getWidth()]) {
 					i |= 4;
 				}
 				// tile to the left is not visible
-				if (curpos%p::ccmap->getWidth() > 0 && !mapvis->at(curpos-1)) {
+				if (curpos%p::ccmap->getWidth() > 0 && !mapvis[curpos-1]) {
 					i |= 8;
 				}
 
@@ -1341,16 +1333,16 @@ void GraphicsEngine::DrawFogOfWar(SDL_Rect dest, SDL_Rect src, SDL_Rect udest)
 					}
 				} else {
 
-					if (curpos >= p::ccmap->getWidth() && curpos%p::ccmap->getWidth() < (Uint16)(p::ccmap->getWidth()-1) && !mapvis->at(curpos-p::ccmap->getWidth()+1)) {
+					if (curpos >= p::ccmap->getWidth() && curpos%p::ccmap->getWidth() < (Uint16)(p::ccmap->getWidth()-1) && !mapvis[curpos-p::ccmap->getWidth()+1]) {
 						i |= 1;
 					}
-					if (curpos < (Uint32)p::ccmap->getWidth()*(p::ccmap->getHeight()-1) && curpos%p::ccmap->getWidth() < (Uint16)(p::ccmap->getWidth()-1) && !mapvis->at(curpos+p::ccmap->getWidth()+1)) {
+					if (curpos < (Uint32)p::ccmap->getWidth()*(p::ccmap->getHeight()-1) && curpos%p::ccmap->getWidth() < (Uint16)(p::ccmap->getWidth()-1) && !mapvis[curpos+p::ccmap->getWidth()+1]) {
 						i |= 2;
 					}
-					if (curpos < (Uint32)p::ccmap->getWidth()*(p::ccmap->getHeight()-1) && curpos%p::ccmap->getWidth() > 0 && !mapvis->at(curpos+p::ccmap->getWidth()-1)) {
+					if (curpos < (Uint32)p::ccmap->getWidth()*(p::ccmap->getHeight()-1) && curpos%p::ccmap->getWidth() > 0 && !mapvis[curpos+p::ccmap->getWidth()-1]) {
 						i |= 4;
 					}
-					if (curpos >= p::ccmap->getWidth() && curpos%p::ccmap->getWidth() > 0 && !mapvis->at(curpos-p::ccmap->getWidth()-1)) {
+					if (curpos >= p::ccmap->getWidth() && curpos%p::ccmap->getWidth() > 0 && !mapvis[curpos-p::ccmap->getWidth()-1]) {
 						i |= 8;
 					}
 
@@ -1779,37 +1771,37 @@ void GraphicsEngine::clipToMaparea(SDL_Rect *src, SDL_Rect *dest)
  */
 void GraphicsEngine::drawMissionLabel()
 {
-    // Get the local player
-    Player* lPlayer = p::ccmap->getPlayerPool()->getLPlayer();
+	// Get the local player
+	//Player* lplayer = p::ppool->getLPlayer();
+	//printf("x=%d y=%d w=%d h=%d\n", maparea.x, maparea.y, maparea.w, maparea.h);
+	//printf("resX=%d W=%d resY=%d  H=%d\n",
+	//maparea.x + (maparea.w + defeatLabel->getWidth())/2, defeatLabel->getWidth(),
+	//maparea.y + (maparea.h + defeatLabel->getHeight())/2, defeatLabel->getHeight());
 
-    //printf("x=%d y=%d w=%d h=%d\n", maparea.x, maparea.y, maparea.w, maparea.h);
-    //printf("resX=%d W=%d resY=%d  H=%d\n",
-    //maparea.x + (maparea.w + defeatLabel->getWidth())/2, defeatLabel->getWidth(),
-    //maparea.y + (maparea.h + defeatLabel->getHeight())/2, defeatLabel->getHeight());
 
-    // If the local player is winning
-    if (lPlayer->isVictorious() == true)
-    {
-        Sint16 resX = maparea.x + (maparea.w - defeatLabel->getWidth())/2;
+	// If the local player is winning
+	if (p::ppool->hasWon() == true)
+	{
+		Sint16 resX = maparea.x + (maparea.w - defeatLabel->getWidth())/2;
 
-        // If the sidebar is visible
-        if (pc::sidebar->getVisible())
-        {
-            // @todo get the real width of the sidebar
-            // resX -= pc::sidebar->getSidebarImage()->w;
-            resX -=30;
-        }
-        
+		// If the sidebar is visible
+		if (pc::sidebar->getVisible())
+		{
+			// @todo get the real width of the sidebar
+			// resX -= pc::sidebar->getSidebarImage()->w;
+			resX -=30;
+		}
+
 		victoryLabel->Draw(screen, // Draw at screen
 							resX,
 							maparea.y + (maparea.h + victoryLabel->getHeight())/2
 							);
-    }
-    
-    // If the local player is lossing
-    if (lPlayer->isDefeated() == true) 
-    {
-        Sint16 resX = maparea.x + (maparea.w - defeatLabel->getWidth())/2;
+	}
+
+	// If the local player is lossing
+	if (p::ppool->hasLost() == true)
+	{
+		Sint16 resX = maparea.x + (maparea.w - defeatLabel->getWidth())/2;
 
 		// If the sidebar is visible
 		if (pc::sidebar->getVisible())
@@ -1840,7 +1832,7 @@ void GraphicsEngine::drawSidebar()
     Uint16 framerate;
     char mtext[128];
 
-    Player* lplayer = p::ccmap->getPlayerPool()->getLPlayer();
+    Player* lplayer = p::ppool->getLPlayer();
 
     tabpos = pc::sidebar->getTabLocation();
 

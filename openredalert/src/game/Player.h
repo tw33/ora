@@ -26,14 +26,13 @@
 
 #include "ConStatus.h"
 #include "UnitOrStructureType.h"
-//#include "Unit.hpp"
+#include "Unit.hpp"
 
 class MoneyCounter;
 class Structure;
 class StructureType;
 class BQueue;
 class INIFile;
-class Unit;
 
 using std::map;
 using std::list;
@@ -45,25 +44,19 @@ using std::vector;
 class Player
 {
 public:
-	explicit Player(const string& pname);
+	explicit Player(const char *pname, INIFile *mapini);
 	~Player();
 	
-	/** Load information from ini file */	
-	void LoadIni(INIFile* mapini);
-	
-	/*bool isLPlayer();*/
+	bool isLPlayer();
 	void setPlayerNum(Uint8 num);
 	void setMultiColour(const char* colour);
 	void setMultiColour(const int colour);
 	Uint8 getMultiColour (void) ;
-	//void setSettings(const char* nick, const char* colour, const char* mside);
-	//void setSettings(const char* nick, const int colour, const char* mside);
+	void setSettings(const char* nick, const char* colour, const char* mside);
+	void setSettings(const char* nick, const int colour, const char* mside);
 
-	unsigned int getPlayerNum() const ;
-	
-	/** Return the name of the player */
-	const string& getName() const ;
-	
+	Uint8 getPlayerNum() const ;
+	const char* getName() const ;
 	Uint8 getSide() const ;
 	bool setSide(Uint8 Side);
 	Uint8 getMSide() const ;
@@ -89,7 +82,7 @@ public:
 	size_t getNumUnits() ;
 	size_t getNumStructs() const ;
 	const vector<Unit*>& getUnits() const ;
-	const vector<Structure*>* getStructures() const ;
+	const vector<Structure*>& getStructures() const ;
 
 	Uint8 getStructpalNum() const ;
 	Uint8 getUnitpalNum() const ;
@@ -98,8 +91,9 @@ public:
 	Uint32 getPowerUsed() const ;
 
 	Uint16 getPlayerStart() const ;
+	void placeMultiUnits();
 
-	void updateOwner(unsigned int newnum);
+	void updateOwner(Uint8 newnum);
 
 	bool isDefeated() const;
 
@@ -109,7 +103,7 @@ public:
 	void didAlly(Player* pl);
 	bool unallyWithPlayer(Player* pl);
 	void didUnally(Player* pl);
-	void setAlliances(INIFile* mapini);
+	void setAlliances();
 	void clearAlliances();
 
 	void addUnitKill() ;
@@ -128,8 +122,8 @@ public:
 	void revealAroundWaypoint(Uint32 Waypoint);
 	enum SOB_update { SOB_SIGHT = 1, SOB_BUILD = 2 };
 	void setVisBuild(SOB_update mode, bool val);
-	vector<bool>* getMapVis() ;
-	vector<bool>* getMapBuildable() ;
+	vector<bool>& getMapVis() ;
+	vector<bool>& getMapBuildable() ;
 
 	/** Turns on a block of cells in either the sight or buildable matrix */
 	void addSoB(Uint32 pos, Uint8 width, Uint8 height, Uint8 sight, SOB_update mode);
@@ -164,8 +158,8 @@ private:
 	map<Uint8, BQueue*> queues;
 
 	bool defeated;
-	string playername;
-	string nickname;
+	char* playername;
+	char* nickname;
 	Uint8 playerside;
 	Uint8 multiside;
 	Uint8 playernum;
@@ -191,7 +185,7 @@ private:
 
 	// All of these pointers are owned elsewhere.
 	vector<Unit*> unitpool;
-    vector<Structure*>* structurepool;
+	vector<Structure*> structurepool;
 	map<StructureType*, list<Structure*> > structures_owned;
 	map<Uint32, list<Structure*> > production_groups;
 	map<Uint32, Structure*> primary_structure;
@@ -205,13 +199,13 @@ private:
      */
 	vector<Player*> non_reciproc_allies;
 
-	vector<Uint8>* sightMatrix;
-	vector<Uint8>* buildMatrix;
+	vector<Uint8> sightMatrix;
+	vector<Uint8> buildMatrix;
 
 	/** List of location that is visible by player */
-	vector<bool>* mapVisible; 
+	vector<bool> mapVisible; 
 	/** List of location that is buildable by player */
-	vector<bool>* mapBuildable;
+	vector<bool> mapBuildable;
 	
 	/** cheat/debug flags: allmap (reveal all map) */
 	bool allmap; 

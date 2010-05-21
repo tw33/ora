@@ -20,7 +20,7 @@
 #include <cmath>
 
 #include "CnCMap.h"
-#include "misc/common.h"
+#include "include/common.h"
 #include "include/Logger.h"
 #include "ProjectileAnim.h"
 #include "weaponspool.h"
@@ -29,7 +29,6 @@
 #include "unittypes.h"
 #include "Unit.hpp"
 #include "ActionEventQueue.h"
-#include "UnitType.h"
 
 namespace p {
 	extern ActionEventQueue* aequeue;
@@ -38,8 +37,7 @@ namespace p {
 TurnAnimEvent::TurnAnimEvent(Uint32 p, Unit *un, Uint8 dir, Uint8 layer) : UnitAnimEvent(p,un)
 {
 #ifdef LOOPEND_TURN
-    UnitType* theType = dynamic_cast<UnitType*>(un->getType());
-    Uint8 loopend= theType->getAnimInfo().loopend;
+    Uint8 loopend=((UnitType*)un->type)->getAnimInfo().loopend;
 #endif
     //logger->debug("Turn cons (t%p u%p d%i l%i)\n",this,un,dir,layer);
     Uint8 layerface;
@@ -96,7 +94,7 @@ void TurnAnimEvent::run()
 #endif
     } else
         layerface = dir;
-//		if (un->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum())
+//		if (un->getOwner() == p::ppool->getLPlayerNum())
 //			printf ("%s line %i: TurnAnimEvent layerface %i, dir = %i, turnmod = %i\n", __FILE__, __LINE__, layerface, dir, turnmod);
 		un->setImageNum(layerface,layer);
 

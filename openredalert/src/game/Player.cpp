@@ -19,11 +19,12 @@
 
 #include <cmath>
 #include <algorithm>
+#include <cassert>
 #include <cstring>
 #include <map>
 
 #include "CnCMap.h"
-#include "misc/config.h"
+#include "include/config.h"
 #include "Dispatcher.h"
 #include "misc/INIFile.h"
 #include "PlayerPool.h"
@@ -64,83 +65,81 @@ extern Logger * logger;
  * map sharing between allies).  This requires some work on the USPool too (see
  * that file for details).
  */
-Player::Player(const string& pname)
+Player::Player(const char *pname, INIFile *mapini)
 {
-    playername = pname;
+    Uint32 mapsize;
+    playername = cppstrdup(pname);
     multiside = 0;
     unallycalls = 0;
     playerstart = 0;
     defeated = false;
-    victorious = false;
-    
-    // Set Player side unit and structure palette
-    if (playername == "Spain") 
+
+    if( !strcmp((playername), ("Spain")))
     {
         playerside = PS_GOOD;
         unitpalnum = 0;
         structpalnum = 0;
-    } 
-    else if (playername == "Greece")
+    } else if( !strcmp((playername), ("Greece")))
     {
     	playerside = PS_GOOD;
     	unitpalnum = 1;
     	structpalnum = 1;
-    } 
-    else if (playername == "USSR")
+    }
+    else if( !strcmp((playername), ("USSR")))
     {
     	playerside = PS_BAD;
     	unitpalnum = 2;
     	structpalnum = 2;
-    } 
-    else if (playername == "England")
+    }
+    else if( !strcmp((playername), ("England")))
     {
     	playerside = PS_GOOD;
     	unitpalnum = 3;
     	structpalnum = 3;
-    } 
-    else if (playername == "Germany")
+    }
+    else if( !strcmp((playername), ("Germany")))
     {
     	playerside = PS_GOOD;
     	unitpalnum = 6;
     	structpalnum = 6;
-    } 
-    else if (playername == "France")
+    }
+    else if( !strcmp((playername), ("France")))
     {
     	playerside = PS_GOOD;
     	unitpalnum = 7;
     	structpalnum = 7;
-    } 
-    else if (playername == "Turkey")
+    }
+    else if( !strcmp((playername), ("Turkey")))
     {
     	playerside = PS_BAD;
     	unitpalnum = 8;
     	structpalnum = 8;
     }
-    else if (playername == "GoodGuy")
+    else if( !strcmp((playername), ("GoodGuy")) )
     {
     	playerside = PS_GOOD;
         unitpalnum = 0;
         structpalnum = 0;
-    } 
-    else if (playername == "Badguy")
+    }
+    else if( !strcmp((playername), ("BadGuy")) )
     {
         playerside = PS_BAD;
         unitpalnum = 2;
         structpalnum = 1;
-    } 
-    else if (playername == "Neutral")
+    }
+    else if( !strcmp((playername), ("Neutral")) )
     {
         playerside = PS_NEUTRAL;
         unitpalnum = 0;
         structpalnum = 0;
-    } 
-    else if (playername == "Special")
+    }
+    else if( !strcmp((playername), ("Special")) )
     {
         playerside = PS_SPECIAL;
         unitpalnum = 0;
         structpalnum = 0;
-    } 
-    /*else if (playername == "multi"), (5)) ) 
+    }
+    else if( !strncmp((playername), ("multi"), (5)) )
     {
         playerside = PS_MULTI;
 
@@ -157,39 +156,21 @@ Player::Player(const string& pname)
         } else {
             unitpalnum = structpalnum = 0;
         }
-        playerstart = p::ccmap->getPlayerPool()->getAStart();
+        playerstart = p::ppool->getAStart();
 #if 0
         if (playerstart != 0) {
             // conversion algorithm from loadmap.cpp
             playerstart = p::ccmap->normaliseCoord(playerstart);
         }
 #endif
-	} */
-    else 
+	}
+    else
 	{
-        logger->warning("Player Side \"%s\" not recognised, using gdi instead\n", playername.c_str());
+        logger->warning("Player Side \"%s\" not recognised, using gdi instead\n",pname);
         playerside = PS_GOOD;
         unitpalnum = 0;
         structpalnum = 0;
     }
-    
-    // Hack !
-    //this->structurepool.reserve(500);
-    this->structurepool = new vector<Structure*>(500);
-    //this->structurepool->resize(1000, 0);
-    
-   sightMatrix = new vector<Uint8>(128*128);
-     buildMatrix= new vector<Uint8>(128*128);
-
-mapVisible= new vector<bool>(128*128); 
- mapBuildable= new vector<bool>(128*128);
-}
-
-/**
- * @param mapini Ini file to load information from
- */
-void Player::LoadIni(INIFile *mapini)
-{
     money = mapini->readInt(playername, "Credits", 0) * 100;
     powerGenerated = 0;
     powerUsed = 0;
@@ -197,15 +178,11 @@ void Player::LoadIni(INIFile *mapini)
 
     // this size is just to size matrixs
     //mapsize = p::ccmap->getWidth()*p::ccmap->getHeight();
-    //unsigned int mapsize = mapini->readInt("Map", "Width", 255) * mapini->readInt("Map", "Height", 255);
-    //sightMatrix.resize(mapsize);
-    //buildMatrix.resize(mapsize);
-    //mapVisible.resize(mapsize);
-    //mapBuildable.resize(mapsize);
-    sightMatrix->resize(255*255);
-    buildMatrix->resize(255*255);
-    mapVisible->resize(255*255);
-    mapBuildable->resize(255*255);
+    mapsize = mapini->readInt("Map", "Width", 255)*mapini->readInt("Map", "Height", 255);
+    sightMatrix.resize(mapsize);
+    buildMatrix.resize(mapsize);
+    mapVisible.resize(mapsize);
+    mapBuildable.resize(mapsize);
 
     // cheats ...
     allmap = buildall = buildany = infmoney = false;
@@ -219,23 +196,21 @@ void Player::LoadIni(INIFile *mapini)
 
     brad = getConfig().buildable_radius;
     mwid = mapini->readInt("Map", "Width", 255); // 255 -> max ???
-    
+
     // Read the TechLevel
-    this->techLevel = mapini->readInt(playername, "TechLevel", 30);
+    this->techLevel = mapini->readInt(pname, "TechLevel", 30);
 }
 
-/**
- */
 Player::~Player()
 {
-/*	map<Uint8, BQueue*>::iterator i, end;
-	
+	map<Uint8, BQueue*>::iterator i, end;
+
 	// Free name of the player
 	if (playername != 0){
 		delete[] playername;
 	}
 	playername = 0;
-   
+
     end = queues.end();
     for (i = queues.begin(); i != end; ++i) {
 		if (i->second != NULL)
@@ -244,24 +219,22 @@ Player::~Player()
     }
 	if (counter != NULL)
 		delete counter;
-	counter = NULL;*/
-    
-    delete this->structurepool;
+	counter = NULL;
 }
 
 /**
  * Return true if the player is the local player
  */
-/*bool Player::isLPlayer()
+bool Player::isLPlayer()
 {
 	// If the number of this player is == to local player number of the pool
-	if (playernum == p::ccmap->getPlayerPool()->getLPlayerNum()){
+	if (playernum == p::ppool->getLPlayerNum()){
 		// it's true
 		return true;
 	}
 	// else it's false
 	return false;
-}*/
+}
 
 
 void Player::setPlayerNum(Uint8 num)
@@ -270,7 +243,7 @@ void Player::setPlayerNum(Uint8 num)
 
 	/*
 	if (p::ccmap->getGameMode() == 0){
-		if (playernum !=  p::ccmap->getPlayerPool()->getLPlayerNum() && playerside != PS_NEUTRAL && playerside != PS_SPECIAL){
+		if (playernum !=  p::ppool->getLPlayerNum() && playerside != PS_NEUTRAL && playerside != PS_SPECIAL){
 			if (pc::Config.mside == "gdi")
 				setMultiColour("red");
 		}
@@ -280,7 +253,7 @@ void Player::setPlayerNum(Uint8 num)
 
 /**
  * Set the palette of the player
- * 
+ *
  * @param colour name of the color
  */
 void Player::setMultiColour(const char* colour)
@@ -317,7 +290,7 @@ void Player::setMultiColour(const char* colour)
 
 /**
  * Set the palette of the player
- * 
+ *
  * @param colour number of the palette
  */
 void Player::setMultiColour(const int colour)
@@ -325,7 +298,7 @@ void Player::setMultiColour(const int colour)
 	// set to default
 	unitpalnum = structpalnum = 0;
 
-	// Check that the number is beteween 0 and 8 
+	// Check that the number is beteween 0 and 8
 	if (colour >= 0 && colour < 9)
 	{
 		unitpalnum = structpalnum = colour;
@@ -335,10 +308,10 @@ void Player::setMultiColour(const int colour)
 
 Uint8 Player::getMultiColour()
 {
-	return structpalnum; 
+	return structpalnum;
 }
 
-/*void Player::setSettings(const char* nick, const char* colour, const char* mside)
+void Player::setSettings(const char* nick, const char* colour, const char* mside)
 {
 //	printf ("%s line %i: Player set settings, colour = %s\n", __FILE__, __LINE__, colour);
     if (mside == NULL || strlen(mside) == 0) {
@@ -367,9 +340,9 @@ Uint8 Player::getMultiColour()
 			playername = cppstrdup(nick);
         }
     }
-}*/
+}
 
-/*void Player::setSettings(const char* nick, const int colour, const char* mside)
+void Player::setSettings(const char* nick, const int colour, const char* mside)
 {
 //	printf ("%s line %i: Player set settings, colour = %i\n", __FILE__, __LINE__, colour);
 
@@ -398,19 +371,19 @@ Uint8 Player::getMultiColour()
 			playername = cppstrdup(nick);
         }
     }
-}*/
-
-unsigned int Player::getPlayerNum() const 
-{
-    return playernum;
 }
 
-const string& Player::getName() const 
+Uint8 Player::getPlayerNum() const
+{
+	return playernum;
+}
+
+const char* Player::getName() const
 {
 	return playername;
 }
 
-Uint8 Player::getSide() const 
+Uint8 Player::getSide() const
 {
 	return playerside;
 }
@@ -426,12 +399,12 @@ bool Player::setSide(Uint8 Side)
 	}
 }
 
-Uint8 Player::getMSide() const 
+Uint8 Player::getMSide() const
 {
 	return multiside;
 }
 
-bool Player::changeMoney(Sint32 change) 
+bool Player::changeMoney(Sint32 change)
 {
     if (0 == change) {
         return true;
@@ -453,18 +426,17 @@ void Player::setMoney(Sint32 NewMoney)
 	money = NewMoney;
 }
 
-Sint32 Player::getMoney() const 
+Sint32 Player::getMoney() const
 {
 	return money;
 }
 
 bool Player::startBuilding(UnitOrStructureType *type)
 {
-    BQueue* queue = getQueue(type->getPQueue());    
-    if (0 == queue) 
-    {
-        //logger->error("Didn't find build queue for \"%s\" (pqueue: %i)\n",
-        //        type->getTName(), type->getPQueue());
+    BQueue* queue = getQueue(type->getPQueue());
+    if (0 == queue) {
+        logger->error("Didn't find build queue for \"%s\" (pqueue: %i)\n",
+                type->getTName(), type->getPQueue());
         return false;
     }
     // Add the type in the queue
@@ -474,10 +446,9 @@ bool Player::startBuilding(UnitOrStructureType *type)
 ConStatus Player::stopBuilding(UnitOrStructureType *type)
 {
     BQueue* queue = getQueue(type->getPQueue());
-    if (0 == queue) 
-    {
+    if (0 == queue) {
         logger->error("Didn't find build queue for \"%s\" (pqueue: %i)\n",
-                type->getName().c_str(), type->getPQueue());
+                type->getTName(), type->getPQueue());
         return BQ_EMPTY;
     }
     return queue->PauseCancel(type);
@@ -486,23 +457,19 @@ ConStatus Player::stopBuilding(UnitOrStructureType *type)
 void Player::pauseBuilding()
 {
     map<Uint8, BQueue*>::iterator i;
-    for (i = queues.begin(); i != queues.end(); ++i) 
-    {
-		if (i->second->getStatus() == BQ_RUNNING)
-		{
+    for (i = queues.begin(); i != queues.end(); ++i) {
+		if (i->second->getStatus() == BQ_RUNNING){
 			//printf ("%s line %i: Buildque running\n", __FILE__, __LINE__);
-			i->second->Pause();
+			i->second->Pause ();
 		}
     }
 }
 
-void Player::resumeBuilding()
+void Player::resumeBuilding(void)
 {
     map<Uint8, BQueue*>::iterator i;
-    for (i = queues.begin(); i != queues.end(); ++i)
-    {
-		if (i->second->getStatus() == BQ_ALL_PAUSED)
-		{
+    for (i = queues.begin(); i != queues.end(); ++i) {
+		if (i->second->getStatus() == BQ_ALL_PAUSED){
 			//printf ("%s line %i: Buildque paused\n", __FILE__, __LINE__);
 			i->second->Resume ();
 		}
@@ -512,10 +479,9 @@ void Player::resumeBuilding()
 void Player::placed(UnitOrStructureType *type)
 {
     BQueue* queue = getQueue(type->getPQueue());
-    if (0 == queue) 
-    {
-        //logger->error("Didn't find build queue for \"%s\" (pqueue: %i) - especially weird as we've just built it\n",
-        //        type->getTName(), type->getPQueue());
+    if (0 == queue) {
+        logger->error("Didn't find build queue for \"%s\" (pqueue: %i) - especially weird as we've just built it\n",
+                type->getTName(), type->getPQueue());
         return;
     }
     queue->Placed();
@@ -524,10 +490,9 @@ void Player::placed(UnitOrStructureType *type)
 ConStatus Player::getStatus(UnitOrStructureType* type, Uint8* quantity, Uint8* progress)
 {
     BQueue* queue = getQueue(type->getPQueue());
-    if (0 == queue) 
-    {
-        //logger->error("No possible status for type \"%s\" as we have no primary building\n",
-        //        type->getTName());
+    if (0 == queue) {
+        logger->error("No possible status for type \"%s\" as we have no primary building\n",
+                type->getTName());
         return BQ_INVALID;
     }
     return queue->getStatus(type, quantity, progress);
@@ -542,20 +507,17 @@ BQueue* Player::getQueue(Uint8 queuenum)
     return it->second;
 }
 
-/**
- * @param un
- */
 void Player::builtUnit(Unit* un)
 {
-    // add in the unit pool
+	// add in the unit pool
     unitpool.push_back(un);
 
-    // add visible
+	// add visible
     addSoB(un->getPos(), 1, 1, un->getType()->getSight(), SOB_SIGHT);
 
-    if (defeated) 
-    {
-    	this->defeated = false;
+    if (defeated) {
+        defeated = false;
+        p::ppool->playerUndefeated(this);
     }
 }
 
@@ -575,11 +537,11 @@ void Player::lostUnit(Unit* un, bool wasDeployed)
 //        logger->gameMsg("%s has %d structs and %d units", playername, (Uint32)structurepool.size(), (Uint32)unitpool.size()-1);
         ++unitlosses;
     }
-    if( unitpool.size() <= 1 && this->structurepool->empty() && !wasDeployed) 
+    if( unitpool.size() <= 1 && structurepool.empty() && !wasDeployed)
     {
     	// Defeat this player
         defeated = true;
-        //p::ccmap->getPlayerPool()->playerDefeated(this);
+        p::ppool->playerDefeated(this);
     } else {
         for (i=0;i<unitpool.size();++i) {
             if (unitpool[i] == un) {
@@ -604,36 +566,31 @@ void Player::movedUnit(Uint32 oldpos, Uint32 newpos, Uint8 sight)
  */
 void Player::builtStruct(Structure* str)
 {
-    if (str == 0)
-    {
-        // Log it
-        logger->error("Player::builtStruct !!!!! Structure = null !!!!! Player = %s \n", this->playername.c_str());   
-        return;
-    }
- 
+    StructureType* st = 0; // Ref to the new Structure
+
     // Get the type of the structure
-    StructureType* st = dynamic_cast<StructureType*> (str->getType());
-    
+    st = dynamic_cast<StructureType*> (str->getType());
+
     // Add this structure to the pool
-    structurepool->push_back(str);
-   
-    // Add some sight (sight of the building)
+    structurepool.push_back(str);
+
+	// Add some sight (sight of the building)
     // @todo change this feature to test during the placement
     addSoB(str->getPos(), st->getXsize(), st->getYsize(), st->getSight(), SOB_SIGHT);
-    // If building 
+    // If building
     // @todo change this feature to test during the placement
     addSoB(str->getPos(), st->getXsize(), st->getYsize(), 2, SOB_BUILD);
-    
+
     // get the power info and update constants
     PowerInfo newpower = st->getPowerInfo();
     powerGenerated += newpower.power;
     powerUsed += newpower.drain;
-    
+
     // Add this structure to Player owned structures
     structures_owned[st].push_back(str);
-    
+
     // ?????
-    if (st->primarySettable()) 
+    if (st->primarySettable())
     {
 		printf ("%s line %i: Set primary, ptype = %i\n", __FILE__, __LINE__, st->getPType() );
         production_groups[st->getPType()].push_back(str);
@@ -645,31 +602,30 @@ void Player::builtStruct(Structure* str)
     }//else if (st->primarySettable()){
 	//	setPrimary(str);
 	//}
-    
+
     // REMOVE the defeat
     if (defeated) {
         defeated = false;
-        //p::ccmap->getPlayerPool()->playerUndefeated(this);
+        p::ppool->playerUndefeated(this);
     }
-        
+
     // Update the number of radar
-    if (string(st->getName()) == "DOME") 
+    if (string(st->getTName()) == "DOME")
     {
     	numberRadars++;
     };
-    
+
     // if it's local player update the sidebar
     // @todo CHANGE THAT
-    //if (playernum == p::ccmap->getPlayerPool()->getLPlayerNum()) {
-    //	p::ccmap->getPlayerPool()->updateSidebar();
-    //}
+    if (playernum == p::ppool->getLPlayerNum()) {
+    	p::ppool->updateSidebar();
+    }
 
     // If this player has no power
     if (this->getPowerUsed() > this->getPower())
     {
     	// Check TRIGGER "Low Power"
-    	// @todo move that 
-        //HandleGlobalTrigger(TRIGGER_EVENT_LOW_POWER, p::ccmap->getPlayerPool()->getHouseNumByPlayerNum(this->getPlayerNum()));
+        HandleGlobalTrigger(TRIGGER_EVENT_LOW_POWER, p::ppool->getHouseNumByPlayerNum(this->getPlayerNum()));
     }
 }
 
@@ -677,7 +633,7 @@ void Player::lostStruct(Structure* str)
 {
     StructureType* st = (StructureType*)str->getType();
     std::list<Structure*>& sto = structures_owned[st];
-    //Uint32 i;
+    Uint32 i;
     removeSoB(str->getPos(), ((StructureType*)str->getType())->getXsize(), ((StructureType*)str->getType())->getYsize(), 1, SOB_BUILD);
     PowerInfo newpower = ((StructureType*)str->getType())->getPowerInfo();
 
@@ -689,18 +645,18 @@ void Player::lostStruct(Structure* str)
 //    printf ("Structure = %c%c%c%c, pointer = %i\n", str->getType()->getTName()[0], str->getType()->getTName()[1], str->getType()->getTName()[2], str->getType()->getTName()[3],(int)str);
 //    logger->gameMsg("%s has %d structs and %d units", playername, (Uint32)structurepool.size()-1, (Uint32)unitpool.size());
     std::list<Structure*>::iterator it = std::find(sto.begin(), sto.end(), str);
-    //assert(it != sto.end());
+    assert(it != sto.end());
     sto.erase(it);
     if (st->primarySettable() /*&& (st->getPType() != 0)*/) {
         std::list<Structure*>& prg = production_groups[st->getPType()];
         it = std::find(prg.begin(), prg.end(), str);
-        //assert(it != prg.end());
+        assert(it != prg.end());
         prg.erase(it);
         if (str == getPrimary(str->getType())) {
             if (prg.empty()) {
                 getPrimary(str->getType()) = 0;
                 map<Uint8, BQueue*>::iterator it = queues.find(st->getPType());
-                //assert(it != queues.end());
+                assert(it != queues.end());
 				if ((*it).second != NULL)
 					delete (*it).second;
 				(*it).second = NULL;
@@ -712,102 +668,82 @@ void Player::lostStruct(Structure* str)
     }//else if (st->primarySettable()){
 
 	//}
-    
+
     // Update number of radars
-    if (st->getName() == "DOME") {
+    if (string(st->getTName()) == "DOME") {
     	numberRadars--;
     }
-    
+
     // Add it for stats
     ++structurelosses;
 
-    if( unitpool.empty() && structurepool->size() <= 1 ) 
-    {
-        logger->gameMsg("Player \"%s\" defeated", playername.c_str());
+    if( unitpool.empty() && structurepool.size() <= 1 ) {
+        logger->gameMsg("Player \"%s\" defeated", playername);
         defeated = true;
-        //p::ccmap->getPlayerPool()->playerDefeated(this);
-    } 
-    else 
-    {
-        /*for (i=0; i < this->structurepool->size(); ++i) 
-        {
-            if (*(structurepool)[i] == str) 
-            {
+        p::ppool->playerDefeated(this);
+    } else {
+        for (i=0;i<structurepool.size();++i) {
+            if (structurepool[i] == str) {
                 break;
             }
         }
-        for (i=i+1;i<structurepool->size();++i) {
+        for (i=i+1;i<structurepool.size();++i) {
             structurepool[i-1] = structurepool[i];
         }
-        structurepool->resize(structurepool->size()-1);*/
-        //this->structurepool->
-        for (unsigned j = 0; j < this->structurepool->size(); j++)
-        {
-            if (this->structurepool->at(j) == str)
-            {
-                this->structurepool->erase(this->structurepool->begin() + j);
-            }
-        }
-
+        structurepool.resize(structurepool.size()-1);
     }
-    
+
     // If it's the local player
     // @todo MOVE THAT
-   // if (playernum == p::ccmap->getPlayerPool()->getLPlayerNum())
-   // {
-       //     p::ccmap->getPlayerPool()->updateSidebar();
-   // }
-    
+    if (playernum == p::ppool->getLPlayerNum()) {
+            p::ppool->updateSidebar();
+    }
+
     // Check TRIGGER "Low Power"
-    //HandleGlobalTrigger(TRIGGER_EVENT_LOW_POWER, this->getPlayerNum());
+    HandleGlobalTrigger(TRIGGER_EVENT_LOW_POWER, this->getPlayerNum());
 }
 
-size_t Player::getNumUnits() 
+size_t Player::getNumUnits()
 {
 	return unitpool.size();
 }
 
-size_t Player::getNumStructs() const 
+size_t Player::getNumStructs() const
 {
-    return this->structurepool->size();
+	return structurepool.size();
 }
 
 const std::vector<Unit*>& Player::getUnits() const {return unitpool;}
-const std::vector<Structure*>* Player::getStructures() const 
-{
-    return this->structurepool;
-}
+const std::vector<Structure*>& Player::getStructures() const {return structurepool;}
 Uint8 Player::getStructpalNum() const {return structpalnum;}
 Uint8 Player::getUnitpalNum() const {return unitpalnum;}
 Uint32 Player::getPower() const {return powerGenerated;}
 
-Uint32 Player::getPowerUsed() const 
+Uint32 Player::getPowerUsed() const
 {
 	return powerUsed;
 }
 
-Uint16 Player::getPlayerStart() const 
+Uint16 Player::getPlayerStart() const
 {
 	return playerstart;
 }
 
-/**
- * 
- */
-void Player::updateOwner(unsigned int newnum)
+void Player::placeMultiUnits()
+{
+	printf ("%s line %i: Place multi units (MCV)\n", __FILE__, __LINE__);
+	// Create the unit in the pool
+    p::uspool->createUnit("MCV", playerstart, 0, playernum, 256, 0, 0, "None");
+}
+
+void Player::updateOwner(Uint8 newnum)
 {
     Uint32 i;
     for (i=0;i<unitpool.size();++i){
         unitpool[i]->setOwner(newnum);
     }
-    /*for (i=0;i<structurepool.size();++i){
-        *(structurepool)[i]->setOwner(newnum);
-    }*/
-    
-    // Upadte the owner of all owned structure
-    for (unsigned int j = 0; j < this->structurepool->size(); j++)
-    {
-        this->structurepool->at(j)->setOwner(newnum);
+    for (i=0;i<structurepool.size();++i){
+        structurepool[i]->setOwner(newnum);
     }
 }
 
@@ -816,7 +752,7 @@ bool Player::isDefeated() const
 	return defeated;
 }
 
-bool Player::isAllied(Player* pl) const 
+bool Player::isAllied(Player* pl) const
 {
     for (Uint16 i = 0; i < allies.size() ; ++i) {
         if (allies[i] == pl)
@@ -825,7 +761,7 @@ bool Player::isAllied(Player* pl) const
     return false;
 }
 
-size_t Player::getNumAllies() const 
+size_t Player::getNumAllies() const
 {
 	return allies.size() - unallycalls;
 }
@@ -897,32 +833,32 @@ void Player::didUnally(Player* pl)
     }
 }
 
-/**
- * @param mapini alliance in this map
- */
-void Player::setAlliances(INIFile* mapini)
-{/*
-    // Get map ini
-    //INIFile* mapini = p::ccmap->getPlayerPool()->getMapINI();
-    
-    // populate "allies_n" with allies
-    string tmp = mapini->readString(playername, "Allies", "");    
+void Player::setAlliances()
+{
+    INIFile *mapini;
     std::vector<char*> allies_n;
-    if (tmp.size() > 0) 
-    {
-    	allies_n = splitList(tmp.c_str(), ',');
+    char *tmp;
+
+	// Get map ini
+	mapini = p::ppool->getMapINI();
+
+	// populate "allies_n" with allies
+    tmp = mapini->readString(playername, "Allies");
+    if( tmp != NULL ) {
+    	allies_n = splitList(tmp,',');
+		if (tmp != NULL){
+			delete[] tmp;
+		}
+		tmp = NULL;
     }
 
     // always allied to self
     allyWithPlayer(this);
     // no initial allies for multiplayer
-    if (multiside == 0) 
-    {
-        for (Uint16 i=0;i<allies_n.size();++i) 
-        {
-            if (playername == (allies_n[i]))
-            {
-                allyWithPlayer(p::ccmap->getPlayerPool()->getPlayerByName(allies_n[i]));
+    if (multiside == 0) {
+        for (Uint16 i=0;i<allies_n.size();++i) {
+            if (strcmp((allies_n[i]), (playername))) {
+                allyWithPlayer(p::ppool->getPlayerByName(allies_n[i]));
             }
 			if (allies_n[i] != NULL)
 				delete[] allies_n[i];
@@ -941,12 +877,12 @@ void Player::setAlliances(INIFile* mapini)
         defeated = true;
         clearAlliances();
         return;
-    }*/
+    }
 }
 
 void Player::clearAlliances()
 {
- /*   Uint32 i;
+    Uint32 i;
     Player* tmp;
     for (i = 0; i < allies.size() ; ++i) {
         if (allies[i] != NULL) {
@@ -958,23 +894,14 @@ void Player::clearAlliances()
         if (non_reciproc_allies[i] != NULL) {
             non_reciproc_allies[i]->unallyWithPlayer(this);
         }
-    }*/
+    }
 }
 
-void Player::addUnitKill() 
-{
-	++unitkills;
-}
+void Player::addUnitKill() {++unitkills;}
 
-void Player::addStructureKill()
-{
-	++structurekills;
-}
+void Player::addStructureKill() {++structurekills;}
 
-Uint32 Player::getUnitKills() const 
-{
-	return unitkills;
-}
+Uint32 Player::getUnitKills() const {return unitkills;}
 
 Uint32 Player::getUnitLosses() const {return unitlosses;}
 
@@ -982,21 +909,21 @@ Uint32 Player::getStructureKills() const {return structurekills;}
 
 Uint16 Player::getStructureLosses() const {return structurelosses;}
 
-size_t Player::ownsStructure(StructureType* stype) 
+size_t Player::ownsStructure(StructureType* stype)
 {
 	return structures_owned[stype].size();
 }
 
-Structure*& Player::getPrimary(const UnitOrStructureType* uostype) 
+Structure*& Player::getPrimary(const UnitOrStructureType* uostype)
 {
 	return primary_structure[uostype->getPType()];
 }
-	
-Structure*& Player::getPrimary(Uint32 ptype) 
+
+Structure*& Player::getPrimary(Uint32 ptype)
 {
 	return primary_structure[ptype];
 }
-	
+
 void Player::setPrimary(Structure* str)
 {
     StructureType* st = (StructureType*)str->getType();
@@ -1012,16 +939,16 @@ void Player::setPrimary(Structure* str)
 
 /**
  * Reveal the map for the player around a waypoint
- * 
+ *
  * @param waypointNumber number of the waypoint of the map
  */
 void Player::revealAroundWaypoint(Uint32 waypointNumber)
 {
 	Uint32 wp_cellpos; // Position of the waypoint
-	
+
 	// Get the position of the waypoint
 	wp_cellpos = p::ccmap->getWaypoint(waypointNumber);
-	
+
 	// Add the visibility for the player (1x1 with diameter/2 of 4)
 	addSoB(wp_cellpos, 1, 1, 4, SOB_SIGHT);
 }
@@ -1032,18 +959,18 @@ void Player::revealAroundWaypoint(Uint32 waypointNumber)
 void Player::setVisBuild(SOB_update mode, bool val)
 {
     if (mode == SOB_SIGHT) {
-        fill(mapVisible->begin(), mapVisible->end(), val);
+        fill(mapVisible.begin(), mapVisible.end(), val);
     } else {
-        fill(mapBuildable->begin(), mapBuildable->end(), val);
+        fill(mapBuildable.begin(), mapBuildable.end(), val);
     }
 }
 
-vector<bool>* Player::getMapVis() 
+vector<bool>& Player::getMapVis()
 {
 	return mapVisible;
 }
 
-vector<bool>* Player::getMapBuildable() 
+vector<bool>& Player::getMapBuildable()
 {
 	return mapBuildable;
 }
@@ -1073,29 +1000,22 @@ void Player::addSoB(Uint32 pos, Uint8 sight, SOB_update mode)
 	Uint32 initY = 0;
 	Uint32 endY = 0;
 	vector<bool>* mapVoB = 0;
-	
 
 
-	/*if (mode == SOB_SIGHT) {
-        mapVoB = mapVisible;
+
+	if (mode == SOB_SIGHT) {
+        mapVoB = &mapVisible;
     } else if (mode == SOB_BUILD) {
-        mapVoB = mapBuildable;
+        mapVoB = &mapBuildable;
         sight  = brad;			// Buildable radius from config file internal-global.ini
     } else {
         //logger->error("addSoB was given an invalid mode: %i\n", mode);
         //return;
         // By default it's about visibility
-        mapVoB = mapVisible;
-    }*/
-     if (mode == SOB_SIGHT) {
-        mapVoB = mapVisible;
-    } else {
-        mapVoB = mapBuildable;
-        sight  = brad;			// Buildable radius from config file internal-global.ini
+        mapVoB = &mapVisible;
     }
-        
-    		
-	
+
+
 	// check min X
 	if ((pos % p::ccmap->getWidth() - sight) < 0)
 	{
@@ -1103,7 +1023,7 @@ void Player::addSoB(Uint32 pos, Uint8 sight, SOB_update mode)
 	} else {
 		initX = pos % p::ccmap->getWidth() - sight;
 	}
-	
+
 	// check max X
 	if ((pos % p::ccmap->getWidth() + sight +1) > p::ccmap->getWidth())
 	{
@@ -1111,8 +1031,8 @@ void Player::addSoB(Uint32 pos, Uint8 sight, SOB_update mode)
 	} else {
 		endX = pos % p::ccmap->getWidth() + sight+1;
 	}
-	
-	
+
+
 	// check min Y
 	if ((pos / p::ccmap->getWidth() - sight) < 0)
 	{
@@ -1120,7 +1040,7 @@ void Player::addSoB(Uint32 pos, Uint8 sight, SOB_update mode)
 	} else {
 		initY = pos / p::ccmap->getWidth() - sight;
 	}
-	
+
 	// check max Y
 	if ((pos / p::ccmap->getWidth() + sight + 1) > p::ccmap->getWidth())
 	{
@@ -1128,25 +1048,25 @@ void Player::addSoB(Uint32 pos, Uint8 sight, SOB_update mode)
 	} else {
 		endY = pos / p::ccmap->getWidth() + sight+1;
 	}
-	
-	
+
+
 	// parse all cell
 	Uint32 curpos = 0;
 	Uint32 xtiles = 0;
 	Uint32 ytiles = 0;
-	Uint32 xpos, ypos;	
+	Uint32 xpos, ypos;
 	for (ypos = initY; ypos < endY; ypos++)
 	{
 		for (xpos = initX; xpos < endX; xpos++)
 		{
 			curpos = xpos + ypos * p::ccmap->getWidth();
-			
+
 			// x
-			if (pos % p::ccmap->getWidth() > curpos % p::ccmap->getWidth()) 
+			if (pos % p::ccmap->getWidth() > curpos % p::ccmap->getWidth())
 			{
 				xtiles = pos % p::ccmap->getWidth() - curpos % p::ccmap->getWidth();
 			} else {
-				xtiles = curpos % p::ccmap->getWidth() - pos % p::ccmap->getWidth();			
+				xtiles = curpos % p::ccmap->getWidth() - pos % p::ccmap->getWidth();
 			}
 			// y
 			if (pos / p::ccmap->getWidth() > curpos / p::ccmap->getWidth()) {
@@ -1154,32 +1074,28 @@ void Player::addSoB(Uint32 pos, Uint8 sight, SOB_update mode)
 			} else {
 				ytiles = curpos / p::ccmap->getWidth() - pos / p::ccmap->getWidth();
 			}
-			
-			
+
+
 			int distance = xtiles*xtiles + ytiles*ytiles;
-			
+
 			//printf("curpos=%d\n", curpos);
-			
+
 			//printf("x=%d y=%d xt=%d yt=%d  distance=%d\n", xpos, ypos, xtiles, ytiles, distance);
 			//double dSight = sight;
-	
+
 			if (distance <= (sight*sight))
 			{
-                            if (curpos>=0 && curpos<sightMatrix->size() && curpos < buildMatrix->size()&& curpos <mapVoB->size())
-                            {
-                                if (mode == SOB_SIGHT)
-                                {
-                                    sightMatrix->at(curpos) += 1;
-                                } else {
-                                    buildMatrix->at(curpos) += 1;
-                                }
-				(*mapVoB)[curpos] = true;  
-                            }
+				sightMatrix[curpos] += (mode == SOB_SIGHT);
+				buildMatrix[curpos] += (mode == SOB_BUILD);
+				if ((*mapVoB).size()>curpos)
+				{
+					(*mapVoB)[curpos] = true;
+				}
 			}
 		}
 	}
-	
-	
+
+
 }
 
 #else
@@ -1276,11 +1192,11 @@ void Player::removeSoB(Uint32 pos, Uint8 width, Uint8 height, Uint8 sight, SOB_u
     if (mode == SOB_SIGHT) {
         for( cpos = 0; cpos < xsize*ysize; cpos++ ) {
             // sightMatrix[curpos] will never be < 1 here
-			if ( curpos >= sightMatrix->size() ){
+			if ( curpos >= sightMatrix.size() ){
 				printf ("%s line %i: ERROR sigtMatrix size error, curpos = %i, mapsize = %i, width = %i height = %i\n", __FILE__, __LINE__, curpos, p::ccmap->getWidth()*p::ccmap->getHeight(), p::ccmap->getWidth(), p::ccmap->getHeight());
 				return;
 			}
-			sightMatrix->at(curpos)--;
+			sightMatrix[curpos]--;
             curpos++;
             if (cpos%xsize == xsize-1)
                 curpos += mwid-xsize;
@@ -1289,16 +1205,16 @@ void Player::removeSoB(Uint32 pos, Uint8 width, Uint8 height, Uint8 sight, SOB_u
         for( cpos = 0; cpos < xsize*ysize; cpos++ ){
 
            // sightMatrix[curpos] will never be < 1 here
-			if ( curpos >= sightMatrix->size() ){
+			if ( curpos >= sightMatrix.size() ){
 				printf ("%s line %i: ERROR sigtMatrix size error, curpos = %i, mapsize = %i, width = %i height = %i\n", __FILE__, __LINE__, curpos, p::ccmap->getWidth()*p::ccmap->getHeight(), p::ccmap->getWidth(), p::ccmap->getHeight());
 				return;
 			}
 
-            if (buildMatrix->at(curpos) <= 1) {
-                mapBuildable->at(curpos) = false;
-                buildMatrix->at(curpos) = 0;
+            if (buildMatrix[curpos] <= 1) {
+                mapBuildable[curpos] = false;
+                buildMatrix[curpos] = 0;
             } else {
-                --buildMatrix->at(curpos);
+                --buildMatrix[curpos];
             }
             curpos++;
             if (cpos%xsize == xsize-1)
@@ -1307,32 +1223,32 @@ void Player::removeSoB(Uint32 pos, Uint8 width, Uint8 height, Uint8 sight, SOB_u
     }
 }
 
-bool Player::canBuildAll() const 
+bool Player::canBuildAll() const
 {
 	return buildall;
 }
-	
-bool Player::canBuildAny() const 
+
+bool Player::canBuildAny() const
 {
 	return buildany;
 }
-	
-bool Player::canSeeAll() const 
+
+bool Player::canSeeAll() const
 {
 	return allmap;
 }
 
-bool Player::hasInfMoney() const 
+bool Player::hasInfMoney() const
 {
 	return infmoney;
 }
-	
-void Player::enableBuildAll() 
+
+void Player::enableBuildAll()
 {
 	buildall = true;
 }
 
-void Player::enableInfMoney() 
+void Player::enableInfMoney()
 {
 	infmoney = true;
 }
@@ -1343,11 +1259,11 @@ Sint32 Player::getTechLevel()
 	return techLevel;
 }
 
-Player::Player() 
+Player::Player()
 {
 }
 
-Player::Player(const Player&) 
+Player::Player(const Player&)
 {
 }
 
@@ -1358,19 +1274,20 @@ Uint32 Player::getNumberRadars()
 {
 	return numberRadars;
 }
-	
-/** 
+
+/**
  * @param value Victorious Set if the player is victorious
  */
 void Player::setVictorious(bool value)
 {
 	this->victorious = value;
 }
-	
-/** 
+
+/**
  * @return <code>true</code> if the player is victorious else <code>false</code>
  */
 bool Player::isVictorious()
 {
 	return this->victorious;
 }
+

@@ -30,7 +30,7 @@
 #include "mix/mixvfs.h"
 #include "misc/INIFile.h"
 #include "include/Logger.h"
-#include "misc/config.h"
+#include "include/config.h"
 
 using std::string;
 using std::vector;
@@ -48,7 +48,6 @@ void VFSUtils::VFS_PreInit(const char* binpath)
 {
     externals = new ExternalFiles(binpath);
     externals->loadArchive("data/settings/");
-    externals->loadArchive("data/maps/");
 }
 
 /**
@@ -77,25 +76,25 @@ void VFSUtils::VFS_Init(const string& binpath)
         return;
     }
     //for (Uint32 pathnum = 1;; ++pathnum)
-    int pathnum = 1;
+    int pathnum =1;
     {
-        INISection::const_iterator key;
-        try
-        {
-            key = filesini->readIndexedKeyValue("GENERAL", pathnum, "PATH");
-        }
-        catch (...)
-        {
-            //logger->error("Unenable to read [GENERAL]-PATH\n");
-            //break;
-        }
-        string defpath = key->second;
-        if (defpath[defpath.length() - 1] != '/' && defpath[defpath.length() - 1] != '\\')
-        {
-            defpath += "/";
-        }
-        externals->loadArchive(defpath.c_str());
-    }
+		INIKey key;
+		try
+		{
+			key = filesini->readIndexedKeyValue("GENERAL", pathnum, "PATH");
+		} catch (...)
+		{
+			//logger->error("Unenable to read [GENERAL]-PATH\n");
+			//break;
+		}
+		string defpath = key->second;
+		if (defpath[defpath.length() - 1] != '/' && defpath[defpath.length()
+				- 1] != '\\')
+		{
+			defpath += "/";
+		}
+		externals->loadArchive(defpath.c_str());
+	}
 
     // Create Mix file loader
     mixfiles = new MIXFiles();
@@ -103,7 +102,7 @@ void VFSUtils::VFS_Init(const string& binpath)
     int gamenum = 1;
 	//for (Uint32 gamenum = 1;; ++gamenum)
     {
-        INISection::const_iterator key;
+        INIKey key;
 		try
 		{
             key = filesini->readIndexedKeyValue("GENERAL", gamenum, "GAME");
@@ -123,7 +122,7 @@ void VFSUtils::VFS_Init(const string& binpath)
             // First check we have all the required mixfiles.
             for (keynum = 1; keynum < numKeys; keynum++)
             {
-                INISection::const_iterator key2;
+                INIKey key2;
                 try
                 {
                     key2 = filesini->readIndexedKeyValue(key->second.c_str(), keynum,
@@ -204,33 +203,33 @@ VFile * VFSUtils::VFS_Open(const char *fname)
  */
 VFile * VFSUtils::VFS_Open(const char *fname, const char* mode)
 {
-    unsigned int fnum; // id of the loaded file
-
-    // Try to get the file
-    fnum = externals->getFile(fname, mode);
-    if (fnum != (Uint32) - 1)
-    {
-        // return the new file created
-        return new VFile(fnum, externals);
-    }
-    // Won't attempt to write/create files in real archives
-    if (mode[0] != 'r')
-    {
-        // return NULL
-        return 0;
-    }
-
-    if (mixfiles != 0)
-    {
-        fnum = mixfiles->getFile(fname);
-        if (fnum != (Uint32)-1)
-        {
-            return new VFile(fnum, mixfiles);
-        }
-    }
-
-    // No file found for this name
-    return 0;
+	Uint32 fnum; // id of the loaded file
+	
+	// Try to get the file
+	fnum = externals->getFile(fname, mode);
+	if (fnum != ExternalFiles::ErrorLoadingFile)
+	{
+		// return the new file created
+		return new VFile(fnum, externals);
+	}
+	// Won't attempt to write/create files in real archives
+	if (mode[0] != 'r')
+	{
+		// return NULL
+		return 0;
+	}
+	
+	if (VFSUtils::mixfiles != NULL)			//if original mix files found, fetch the ini from the mix file
+	{
+		fnum = mixfiles->getFile(fname);
+		if (fnum != ExternalFiles::ErrorLoadingFile)
+		{
+			return new VFile(fnum, mixfiles);
+		}
+	}
+	
+	// No file found for this name
+	return 0;
 }
 
 /**

@@ -32,8 +32,8 @@ namespace pc {
 /**
  * Create a SidebarButton
  */
-SidebarButton::SidebarButton(int x, int y, const string& picname, Uint8 func,
-		const string& theatre, Uint8 pal) :
+SidebarButton::SidebarButton(Sint16 x, Sint16 y, const char* picname, Uint8 func,
+		const char* theatre, Uint8 pal) :
 	pic(0), function(func), palnum(pal), theatre(theatre), using_fallback(false)
 {
 	
@@ -47,8 +47,6 @@ SidebarButton::SidebarButton(int x, int y, const string& picname, Uint8 func,
 	FallbackLabel.UseAntiAliasing(false);
 }
 
-/**
- */
 SidebarButton::~SidebarButton()
 {
 	if (using_fallback)
@@ -58,24 +56,20 @@ SidebarButton::~SidebarButton()
 	}
 }
 
-/**
- * @param fname
- */
-void SidebarButton::ChangeImage(const string& fname)
+void SidebarButton::ChangeImage(const char* fname)
 {
 	ChangeImage(fname, 0, 1);
 }
 
-void SidebarButton::ChangeImage(const string& fname, Uint8 number)
+void SidebarButton::ChangeImage(const char* fname, Uint8 number)
 {
 	ChangeImage(fname, number, 1);
 }
 
-void SidebarButton::ChangeImage(const string& fname, Uint8 number, Uint8 side)
+void SidebarButton::ChangeImage(const char* fname, Uint8 number, Uint8 side)
 {
 	// Error checking
-	if (side != 1 && side != 2)
-	{
+	if (side != 1 && side != 2){
 		return;
 	}
 
@@ -87,7 +81,7 @@ void SidebarButton::ChangeImage(const string& fname, Uint8 number, Uint8 side)
 
 	try
 	{
-		picnum = pc::imgcache->loadImage(fname.c_str());
+		picnum = pc::imgcache->loadImage(fname);
 		picnum += number;
 		picnum |= palnum<<11;
 		
@@ -119,28 +113,28 @@ void SidebarButton::ChangeImage(const string& fname, Uint8 number, Uint8 side)
 	}
 }
 
-SDL_Surface* SidebarButton::Fallback(const string& fname)
+SDL_Surface* SidebarButton::Fallback(const char* fname)
 {
+	SDL_Surface* ret;
 	Uint32 width, height;
+	Uint32 slen = strlen(fname);
+	char* iname = new char[slen-7];
 
 	using_fallback = true; // Ensures that the surface created gets destroyed later.
-	fallbackfname = fname.c_str();
+	fallbackfname = fname;
 
-	string iname = fname.substr(0, 8);
-	
-
+	strncpy(iname, fname, slen-8);
+	iname[slen-8] = 0;
 	width = pc::sidebar->getGeom().bw;
 	height = pc::sidebar->getGeom().bh;
-	SDL_Surface* ret = SDL_CreateRGBSurface(SDL_SWSURFACE|SDL_SRCCOLORKEY, width, height, 16, 0, 0, 0, 0);
+	ret	= SDL_CreateRGBSurface(SDL_SWSURFACE|SDL_SRCCOLORKEY, width, height, 16, 0, 0, 0, 0);
 	SDL_FillRect(ret, NULL, 0);
 	//pc::sidebar->getFont()->drawText(iname,ret,0,0);
 	FallbackLabel.Draw(iname, ret, 0, 0);
-	
+	delete[] iname;
 	return ret;
 }
 
-/**
- */
 void SidebarButton::ReloadImage()
 {
 	//If we are using fallback we must redraw
@@ -156,9 +150,6 @@ void SidebarButton::ReloadImage()
 	}
 }
 
-/**
- * @return surface with the picture of the button
- */
 SDL_Surface* SidebarButton::getSurface() const
 {
 	return pic;
@@ -169,7 +160,7 @@ SDL_Rect SidebarButton::getRect() const
 	return picloc;
 }
 
-unsigned int SidebarButton::getFunction() const
+Uint8 SidebarButton::getFunction() const
 {
 	return function;
 }

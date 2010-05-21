@@ -22,7 +22,6 @@
 #include "SDL/SDL_types.h"
 #include "UnitOrStructure.h"
 #include "ActionEventQueue.h"
-#include "game/Unit.hpp"
 #include "Unit.hpp"
 
 namespace p {
@@ -66,3 +65,4 @@ void UnitAnimEvent::stopScheduled()
 void UnitAnimEvent::update()
 {
 }
+

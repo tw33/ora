@@ -398,10 +398,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\ui\MapAnimationMenu.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\ui\Menu.cpp"
 				>
 			</File>
@@ -602,15 +598,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\game\Trigger.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\game\TriggerAction.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\game\TriggerManager.cpp"
 				>
 			</File>
 			<File
@@ -1040,10 +1028,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\ui\MapAnimationMenu.hpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\ui\Menu.h"
 				>
 			</File>
@@ -1320,15 +1304,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\game\Trigger.hpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\game\TriggerAction.h"
-				>
-			</File>
-			<File
-				RelativePath=".\src\game\TriggerManager.hpp"
 				>
 			</File>
 			<File

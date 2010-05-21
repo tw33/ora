@@ -27,11 +27,10 @@
 #include "Player.h"
 #include "anim_nfo.h"
 #include "Structure.h"
-#include "CnCMap.h"
 
 //extern Logger * logger;
 namespace p {
-	extern CnCMap* ccmap;
+	extern PlayerPool* ppool;
 }
 
 RefineAnimEvent::RefineAnimEvent(Uint32 p, Structure* str, Uint8 bails) : BuildingAnimEvent(p, str, 7)
@@ -56,7 +55,7 @@ void RefineAnimEvent::anim_func(anim_nfo* data)
             frame = framestart;
             --bails;
             // @todo CHANGE IT TO GET FROM STRUCTURE
-            p::ccmap->getPlayerPool()->getPlayer(str->getOwner())->changeMoney(100);
+            p::ppool->getPlayer(str->getOwner())->changeMoney(100);
         }
     } else {
         data->done = true;

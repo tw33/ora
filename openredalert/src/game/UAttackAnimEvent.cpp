@@ -29,14 +29,12 @@
 #include "Projectile.h"
 #include "Weapon.h"
 #include "PlayerPool.h"
-#include "game/Unit.hpp"
 #include "CnCMap.h"
 #include "include/Logger.h"
 #include "Unit.hpp"
-#include "UnitType.h"
 
 namespace p {
-	extern CnCMap* ccmap;
+	extern PlayerPool* ppool;
 	extern ActionEventQueue * aequeue;
 	extern CnCMap * ccmap;
 }
@@ -56,7 +54,7 @@ UAttackAnimEvent::UAttackAnimEvent(Uint32 p, Unit *un) : UnitAnimEvent(p,un)
 
 	// Determine the weapon to use
 	if (!target->getType()->isStructure()){
-		switch (((Unit*)target)->getType()->getPType()){
+		switch (((Unit*)target)->getType()->getType()){
 			case UN_INFANTRY:
 			case UN_VEHICLE:
 				Weap = un->getType()->getWeapon();
@@ -84,7 +82,7 @@ UAttackAnimEvent::UAttackAnimEvent(Uint32 p, Unit *un) : UnitAnimEvent(p,un)
 				}
 				break;
 			default:
-				logger->error ("%s line %i: ERROR unknown unit type %i\n", __FILE__, __LINE__, ((Unit*)target)->getType()->getPType());
+				logger->error ("%s line %i: ERROR unknown unit type %i\n", __FILE__, __LINE__, ((Unit*)target)->getType()->getType());
 				break;
 		}
 	}else{
@@ -139,11 +137,10 @@ void UAttackAnimEvent::run()
 {
     Sint32 xtiles, ytiles;
     Uint16 atkpos;
-    
+    float alpha;
     Uint8 facing;
 #ifdef LOOPEND_TURN
-    UnitType* unitType = dynamic_cast<UnitType*>(un->getType());
-    Uint8 loopend2 = unitType->getAnimInfo().loopend2;
+    Uint8 loopend2=((UnitType*)un->type)->getAnimInfo().loopend2;
 #endif
 
     //logger->debug("attack run t%p u%p\n",this,un);
@@ -177,13 +174,13 @@ void UAttackAnimEvent::run()
     
     // @todo modify calculs
     //distance = abs()>abs(ytiles)?abs(xtiles):abs(ytiles);
-    Sint32 distanceSint = xtiles*xtiles + ytiles*ytiles; // distance
-    double distanceCube = distanceSint;
-	double distance = sqrt(distanceCube);
-
-	// Test if distance is > to the weapon range
-    if( distance > un->type->getWeapon(UsePrimaryWeapon)->getRange()) 
-	{
+#ifdef _WIN32
+	double distance = sqrt(((double)xtiles*xtiles + ytiles*ytiles));
+#else
+	double distance = sqrt(xtiles*xtiles + ytiles*ytiles);
+#endif
+    
+    if( distance > un->type->getWeapon(UsePrimaryWeapon)->getRange() /* weapons range */ ) {
         setDelay(0);
         waiting = 3;
         un->move(atkpos,false);
@@ -191,19 +188,17 @@ void UAttackAnimEvent::run()
         un->moveanim->setSchedule(this);
         return;
     }
-
     //Make sure we're facing the right way
-	double alpha = 0;
     if( xtiles == 0 ) {
         if( ytiles < 0 ) {
-            alpha = -1.57079632679489661923;
+            alpha = (float)-1.57079632679489661923;
         } else {
-            alpha = 1.57079632679489661923;
+            alpha = (float)1.57079632679489661923;
         }
     } else {
         alpha = atan((float)ytiles/(float)xtiles);
         if( xtiles < 0 ) {
-            alpha = 3.14159265358979323846 + alpha;
+            alpha = 3.14159265358979323846+alpha;
         }
     }
 #ifdef LOOPEND_TURN
@@ -253,7 +248,7 @@ void UAttackAnimEvent::run()
 
 	// Throw an event
 	HandleTriggers(target, TRIGGER_EVENT_ATTACKED,
-	    		p::ccmap->getPlayerPool()->getHouseNumByPlayerNum(un->getOwner()));
+	    		p::ppool->getHouseNumByPlayerNum(un->getOwner()));
 
 		
     // We can shoot

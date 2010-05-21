@@ -52,7 +52,7 @@ public:
 
     Warhead* getWarhead();
 
-    const string getChargingSound() const;
+    char* getChargingSound();
 
     void fire(UnitOrStructure* owner, Uint16 target, Uint8 subtarget);
 
@@ -98,10 +98,10 @@ private:
     //Uint8 numfireimages; 
     //Uint8 numfiredirections;
     
-    string report;
-    string reloadsound;
-    string chargingsound;
+    char* report;
+    char* reloadsound;
+    char* chargingsound;
     string name;
 };
 
-#endif
+#endif //WEAPON_H

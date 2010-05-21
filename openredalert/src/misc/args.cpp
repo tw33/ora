@@ -23,13 +23,11 @@
 #include "include/sdllayer.h"
 
 #include "video/Renderer.h"
-#include "config.h"
+#include "include/config.h"
 #include "misc/INIFile.h"
 #include "include/Logger.h"
 
-#ifndef VERSION
 #define VERSION "438"
-#endif
 
 using std::cout;
 using std::endl;
@@ -69,7 +67,6 @@ void PrintUsage()
     printf("  -side <GDI or NOD> - sets your side for multiplayer\n");
     printf("  -server address    - Address of the server for multiplayer.\n");
     printf("  -port number       - Port to which a connection should be made.\n\n");
-    printf("  -v, --version      - Print the version.\n\n");
 }
 
 const ConfigType& getConfig()
@@ -87,6 +84,7 @@ const ConfigType& getConfig()
 extern bool parse(int argc, char **argv)
 {
     int i;
+    char *tmp;
     bool fullscreen = false;
     INIFile *freecnc_ini;
     INIFile *internal_ini;
@@ -166,7 +164,7 @@ extern bool parse(int argc, char **argv)
             }
             continue;
         }
-       /* if (strcmp(argv[i], "-skirmish") == 0) {
+        if (strcmp(argv[i], "-skirmish") == 0) {
             if (argv[i+1]) {
                 config.gamemode = 1;
                 config.totalplayers = abs(atoi(argv[i+1]));
@@ -182,8 +180,8 @@ extern bool parse(int argc, char **argv)
                 pc::Config.startMoney = 10000;
             }
             continue;
-        }*/
-      /*  if (strcmp(argv[i], "-multi") == 0) {
+        }
+        if (strcmp(argv[i], "-multi") == 0) {
             if (argv[i+1]&&(argv[i+2])) {
                 config.gamemode = 2;
                 config.totalplayers = abs(atoi(argv[i+2]));
@@ -203,14 +201,14 @@ extern bool parse(int argc, char **argv)
                 i += 2;
             }
             continue;
-        }*/
-      /*  if (strcmp(argv[i], "-nick") == 0) {
+        }
+        if (strcmp(argv[i], "-nick") == 0) {
             if (argv[i+1]) {
                 config.nick = argv[i+1];
                 ++i;
             }
             continue;
-        }*/
+        }
         if (strcmp(argv[i], "-colour") == 0) {
             if (argv[i+1]) {
                 config.side_colour = argv[i+1];

@@ -17,6 +17,7 @@
 
 #include "SoundFile.h"
 
+#include <cassert>
 #include <limits>
 #include <memory>
 #include <string>
@@ -53,11 +54,7 @@ SoundFile::SoundFile() : fileOpened(false)
     }
 }
 
-/**
- *
- */
-SoundFile::~SoundFile()
-{
+SoundFile::~SoundFile(){
     Close();
 }
 
@@ -118,8 +115,8 @@ void SoundFile::Close()
 {
     if (fileOpened)
     {
-        /// Close the file in the VFS
-        VFSUtils::VFS_Close(file);
+    	/// Close the file in the VFS
+    	VFSUtils::VFS_Close(file);
         fileOpened = false;
     }
 }
@@ -133,12 +130,8 @@ Uint32 SoundFile::Decode(SampleBuffer& buffer, Uint32 length)
         return SOUND_DECODE_ERROR;
     }
 
-    // Check that the buffer is empty
-    if (!buffer.empty())
-    {
-        logger->error("[SoundFile::Decode()] the buffer to decode in is not empty !");
-        return SOUND_DECODE_ERROR;
-    }
+    assert(buffer.empty());
+
 
     Uint32 max_size = length == 0 ? uncomp_size * conv->len_mult : length;
     buffer.resize(max_size);

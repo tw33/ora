@@ -15,10 +15,14 @@
 //    You should have received a copy of the GNU General Public License
 //    along with OpenRedAlert.  If not, see <http://www.gnu.org/licenses/>.
 
+#ifdef _WIN32
+#include <algorithm>
+#include <functional>
+#endif
+
 #include "ImageCache.h"
 
 #include <algorithm>
-#include <functional>
 
 #include "ImageNotFound.h"
 #include "SHPImage.h"
@@ -117,7 +121,7 @@ ImageCacheEntry& ImageCache::getImage(Uint32 imgnum)
 
 	ImageCacheEntry& entry = cache[imgnum];
 
-	//Uint8 palnum = p::ccmap->getPlayerPool()->getLPlayer()->getMultiColour ();
+	//Uint8 palnum = p::ppool->getLPlayer()->getMultiColour ();
 
     // Palette is ((imgnum>>11)&0x1f).
 //		printf ("%s line %i: Palette number = %i\n", __FILE__, __LINE__, ((imgnum>>11)&0x1f));

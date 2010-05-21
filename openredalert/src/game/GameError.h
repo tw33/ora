@@ -18,17 +18,16 @@
 #ifndef GAMEERROR_H
 #define GAMEERROR_H
 
-#include <string>
 #include <stdexcept>
 
-using std::string;
+#include "include/config.h"
+
 using std::runtime_error;
 
 
 class GameError : public runtime_error 
 {
 public:
-    GameError(const string& msg) ;
+	GameError(const string& msg) ;
 };
-
-#endif //GAMEERROR_H
+#endif

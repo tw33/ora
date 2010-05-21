@@ -21,7 +21,7 @@
 
 #include "ActionEventQueue.h"
 #include "Player.h"
-#include "misc/config.h"
+#include "include/config.h"
 #include "include/Logger.h"
 #include "misc/INIFile.h"
 #include "GameMode.h"
@@ -34,89 +34,29 @@ namespace pc
 }
 extern Logger* logger;
 
-/**
- */
-PlayerPool::PlayerPool()
+PlayerPool::PlayerPool(INIFile *inifile, Uint8 gamemode)
 {
-	// RAZ of players starts
-	for (unsigned int i = 0; i < 8; i++)
-    {
-        playerstarts[i] = 0;
-    }
-    
-    // By default no update of the sidebar
-    updatesidebar = false;
-    
-    // Create the default player list
-    playerpool.push_back(new Player("Spain"));
-    playerpool.push_back(new Player("Greece"));
-    playerpool.push_back(new Player("USSR"));
-    playerpool.push_back(new Player("England"));
-    playerpool.push_back(new Player("Germany"));
-    playerpool.push_back(new Player("France"));
-    playerpool.push_back(new Player("Turkey"));
-    
-    playerpool.push_back(new Player("GoodGuy"));
-    playerpool.push_back(new Player("BadGuy"));
-    playerpool.push_back(new Player("Neutral"));
-    playerpool.push_back(new Player("Special"));
-    
-    // Create players for scirmish
-    playerpool.push_back(new Player("Multi1"));
-    playerpool.push_back(new Player("Multi2"));
-    playerpool.push_back(new Player("Multi3"));
-    playerpool.push_back(new Player("Multi4"));
-    playerpool.push_back(new Player("Multi5"));
-    playerpool.push_back(new Player("Multi6"));
-    playerpool.push_back(new Player("Multi7"));
-    playerpool.push_back(new Player("Multi8"));    
-}
-
-/**
- * @param gamemode xxx
- */
-void PlayerPool::Init(Uint8 gamemode)
-{
-}
-
-/**
- * @param inifile Ini file where to laod the info
- */
-void PlayerPool::LoadIni(INIFile *inifile)
-{
-	// Load ini informations
-	for (unsigned int i = 0; i < playerpool.size(); i++)
+	for (int i = 0; i < 8; i++)
 	{
-		Player* thePlayer = playerpool.at(i);
-		thePlayer->LoadIni(inifile);
+		playerstarts[i] = 0;
 	}
-	
-	// Set the local player
-	if  (gamemode == GAME_MODE_SINGLE_PLAYER)
-	{
-		// Test if the key exist
-		if (inifile->isKeyInSection("Basic", "Player") == true)
-		{
-			// Set the local player with info n the ini file
-			setLPlayer(inifile->readString("Basic", "Player"));
-		}
-	}
-	
-	// Set the alliances between players
-	setAlliances(inifile);
+	lost = false;
+	won = false;
+	mapini = inifile;
+	updatesidebar = false;
+	this->gamemode = gamemode;
 }
 
-/**
- */
 PlayerPool::~PlayerPool()
 {
-	// Free all Player in the vector
-	for (unsigned int i = 0; i < playerpool.size(); i++)
+	Uint8 i;
+	for (i = 0; i < playerpool.size(); i++)
 	{
-		if (playerpool[i] != 0)
+		if (playerpool[i] != NULL)
 		{
 			delete playerpool[i];
 		}
+		playerpool[i] = NULL;
 	}
 }
 
@@ -172,26 +112,25 @@ const int PlayerPool::MultiColourStringToNumb(const string& colour)
 
 void PlayerPool::setLPlayer(const string& pname)
 {
-    for (unsigned int i = 0; i < playerpool.size(); i++)
+    for (unsigned i = 0; i < playerpool.size(); i++)
     {
-        if (playerpool.at(i)->getName() == pname)
+        if (string(playerpool.at(i)->getName()) != pname)
         {
             localPlayer = i;
             return;
         }
     }
-    
+
     logger->warning("Tried to set local player to non-existing player '%s'\n", pname.c_str());
-    /*playerpool.push_back(new Player(pname.c_str(), mapini));
+    playerpool.push_back(new Player(pname.c_str(), mapini));
     localPlayer = static_cast<Uint8>(playerpool.size()-1);
-    playerpool[localPlayer]->setPlayerNum(localPlayer);*/
+    playerpool[localPlayer]->setPlayerNum(localPlayer);
 }
 
-/*void PlayerPool::setLPlayer(Uint8 number, const char* nick, const char* colour,
+void PlayerPool::setLPlayer(Uint8 number, const char* nick, const char* colour,
 		const char* mside)
 {
-	Uint8 i;
-	for (i = 0; i < playerpool.size(); i++)
+	for (unsigned i = 0; i < playerpool.size(); i++)
 	{
 		if (playerpool[i]->getMSide() == number)
 		{
@@ -201,13 +140,13 @@ void PlayerPool::setLPlayer(const string& pname)
 		}
 	}
 	//logger->warning("Tried to set local player to non-existing player number %i\n", number);
-	//  playerpool.push_back(new Player("multi", mapini, this));
-	//localPlayer = playerpool.size()-1;
-	// playerpool[localPlayer]->setSettings(nick,colour,mside);
-	 
-}*/
+	/*  playerpool.push_back(new Player("multi", mapini, this));
+	 localPlayer = playerpool.size()-1;
+	 playerpool[localPlayer]->setSettings(nick,colour,mside);
+	 */
+}
 
-/*void PlayerPool::setPlayer(Uint8 number, const char* nick, const int colour,
+void PlayerPool::setPlayer(Uint8 number, const char* nick, const int colour,
 		const char* mside)
 {
 	Uint8 i;
@@ -221,62 +160,51 @@ void PlayerPool::setLPlayer(const string& pname)
 		}
 	}
 	//logger->warning("Tried to set local player to non-existing player number %i\n", number);
-	//  playerpool.push_back(new Player("multi", mapini, this));
-	// localPlayer = playerpool.size()-1;
-	// playerpool[localPlayer]->setSettings(nick,colour,mside);
-	
-}*/
+	/*  playerpool.push_back(new Player("multi", mapini, this));
+	 localPlayer = playerpool.size()-1;
+	 playerpool[localPlayer]->setSettings(nick,colour,mside);
+	 */
+}
 
-/**
- * Return the number of the player with this name
- */
 int PlayerPool::getPlayerNum(const string& pname)
 {
-    // Parse each players to found it
     for (unsigned int i = 0; i < playerpool.size(); i++)
     {
-        if (playerpool.at(i)->getName() == pname)
+        if (string(playerpool.at(i)->getName()) == pname)
         {
             return i;
         }
     }
 
-    //logger->error("%s line %i: Create new player: %s\n", __FILE__, __LINE__, pname.c_str());
-    //playerpool.push_back(new Player(pname.c_str(), mapini));
-    //playerpool[playerpool.size() - 1]->setPlayerNum(playerpool.size() - 1);
-    //return playerpool.size() - 1;
-    
-    return -1;
+    logger->error("%s line %i: Create new player: %s\n", __FILE__, __LINE__, pname.c_str());
+    playerpool.push_back(new Player(pname.c_str(), mapini));
+    playerpool[playerpool.size() - 1]->setPlayerNum(playerpool.size() - 1);
+    return playerpool.size() - 1;
 }
 
 char RA_house[20][10] =
 { "Spain", "Greece", "Ussr", "England", "Ukraine", "Germany", "France",
 		"Turkey", "Goodguy", "Badguy", "Special", "Neutral", "Multi1",
-		"Multi2", "Multi3", "Multi4", "Multi5", "Multi6", "Multi7", "Multi8" 
+		"Multi2", "Multi3", "Multi4", "Multi5", "Multi6", "Multi7", "Multi8"
 };
 
 /**
- * Decode player number coded in ini files
- * 
- * @param house number of the house
  */
-int PlayerPool::getPlayerNumByHouseNum(int house) const
+int PlayerPool::getPlayerNumByHouseNum(int House) const
 {
     // Check if num <19 (because their are only 20 houses)
-    if (house > 19 || house < 0)
+    if (House > 19 || House < 0)
     {
         return -1;
     }
 
     for (unsigned int i = 0; i < playerpool.size(); i++)
     {
-        if (playerpool[i]->getName() == RA_house[house])
+        if (string(playerpool[i]->getName()) == RA_house[House])
         {
             return i;
         }
     }
-    
-    // No player found
     return -1;
 }
 
@@ -305,17 +233,11 @@ int PlayerPool::getHouseNumByPlayerNum(unsigned int playerNumber) const
     return -1;
 }
 
-Player* PlayerPool::getPlayer(const string& pname)
-{
-    return getPlayerByName(pname.c_str());
-}
-
 Player* PlayerPool::getPlayerByName(const char* pname)
 {
 	return playerpool[getPlayerNum(pname)];
 }
 
-/*
 vector<Player*> PlayerPool::getOpponents(Player* pl)
 {
 	vector<Player*> opps;
@@ -328,7 +250,7 @@ vector<Player*> PlayerPool::getOpponents(Player* pl)
 	}
 	return opps;
 }
-*//*
+
 void PlayerPool::playerDefeated(Player *pl)
 {
 	Uint8 i;
@@ -365,22 +287,21 @@ void PlayerPool::playerDefeated(Player *pl)
 			won = true;
 		}
 	}
-	
-	
+
+
 	// If it's not single player mission
 	if (gamemode == GAME_MODE_SKIRMISH ||
 		gamemode == GAME_MODE_MULTI_PLAYER)
 	{
-		logger->gameMsg("Player \"%s\" defeated", pl->getName().c_str());
+		logger->gameMsg("Player \"%s\" defeated", pl->getName());
 	}
 }
 
 void PlayerPool::playerUndefeated(Player* pl)
 {
-	// @todo check that
-	//pl->setAlliances();
-	
-	unsigned int i = 0;
+	Uint8 i;
+
+	pl->setAlliances();
 	for (i = 0; i < playerpool.size(); i++)
 	{
 		if (playerpool[i] == pl)
@@ -400,15 +321,15 @@ void PlayerPool::playerUndefeated(Player* pl)
 		}
 	}
 }
-*/
+
 /**
- * 
- *//*
+ *
+ */
 void PlayerPool::playerVictorious(Player* pl)
 {
 	Uint8 i;
 
-	//pl->setAlliances();
+	pl->setAlliances();
 	for (i = 0; i < playerpool.size(); i++)
 	{
 		if (playerpool[i] == pl)
@@ -417,7 +338,7 @@ void PlayerPool::playerVictorious(Player* pl)
 			break;
 		}
 	}
-	
+
 	if (gamemode == 0)//GAME_MODE_SINGLE_PLAYER)
 	{
 		if (i == localPlayer)
@@ -427,21 +348,20 @@ void PlayerPool::playerVictorious(Player* pl)
 		}
 	}
 }
-*/
-/*INIFile* PlayerPool::getMapINI()
+
+INIFile* PlayerPool::getMapINI()
 {
 	return mapini;
-}*/
+}
 
-void PlayerPool::setAlliances(INIFile* mapini)
+void PlayerPool::setAlliances()
 {
-	// @todo refactor this to set by player the ally
-	for (unsigned int i = 0; i < playerpool.size(); i++)
+	for (Uint16 i=0; i < playerpool.size() ; ++i)
 	{
-		playerpool[i]->setAlliances(mapini);
+		playerpool[i]->setAlliances();
 	}
 }
-/*
+
 void PlayerPool::placeMultiUnits()
 {
 	for (Uint16 i=0; i < playerpool.size() ; ++i)
@@ -455,11 +375,8 @@ void PlayerPool::placeMultiUnits()
 			printf("%s line %i: Failed to get player start\n",__FILE__ , __LINE__);
 		}
 	}
-}*/
+}
 
-/**
- * @return Random start in the map
- */
 Uint16 PlayerPool::getAStart()
 {
 	Uint8 rnd, sze = 0;
@@ -512,12 +429,12 @@ void PlayerPool::updateSidebar()
 
 /**
  * Get the current status of the radar
- * 
+ *
  * case 0: // do nothing
  * case 1: // got radar
  * case 2: // lost radar
  * case 3: // radar powered down
- */ 
+ */
 Uint8 PlayerPool::statRadar()
 {
 	static Uint32 old_numRadarLocalPlayer = 0;
@@ -525,7 +442,7 @@ Uint8 PlayerPool::statRadar()
 	Player* localPlayer = 0;
 	Uint8 res;
 	bool powerOk;
-	
+
 	// Get the localPlayer
 	localPlayer = getLPlayer();
 
@@ -534,12 +451,12 @@ Uint8 PlayerPool::statRadar()
 
 	// by default
 	res = 0;
-	
+
 	// If same number of radars
-	if (old_numRadarLocalPlayer == localPlayer->getNumberRadars()) 
+	if (old_numRadarLocalPlayer == localPlayer->getNumberRadars())
 	{
 		// if old their was radars
-		if (old_numRadarLocalPlayer >0) 
+		if (old_numRadarLocalPlayer >0)
 		{
 			if (powerOk == false && old_powerOk == true)
 			{
@@ -555,15 +472,15 @@ Uint8 PlayerPool::statRadar()
 	if (localPlayer->getNumberRadars() > old_numRadarLocalPlayer)
 	{
 		// if old their was no radars
-		if (old_numRadarLocalPlayer == 0) 
-		{			
+		if (old_numRadarLocalPlayer == 0)
+		{
 			if (powerOk == true)
 			{
 				res = 1;
 			} else {
 				res = 3;
 			}
-			
+
 		}
 	}
 	else
@@ -571,26 +488,26 @@ Uint8 PlayerPool::statRadar()
 	if (localPlayer->getNumberRadars() < old_numRadarLocalPlayer)
 	{
 		// if there are no radar
-		if (localPlayer->getNumberRadars() == 0) 
+		if (localPlayer->getNumberRadars() == 0)
 		{
 			res = 2;
-		} 
-		else 
+		}
+		else
 		{
 			if (powerOk == true && old_powerOk == false)
 			{
 				res = 1;
-			} else if (powerOk == false && old_powerOk == true) 
+			} else if (powerOk == false && old_powerOk == true)
 			{
-				res = 2;			
+				res = 2;
 			}
 		}
 	}
-	
+
 	// Save olds
 	old_numRadarLocalPlayer = localPlayer->getNumberRadars();
 	old_powerOk = powerOk;
-		
+
 	// Return result
 	return res;
 }
@@ -614,14 +531,12 @@ Player* PlayerPool::getLPlayer()
 	return 0;
 }
 
-Player* PlayerPool::getPlayer(int playerNumber) const
+Player* PlayerPool::getPlayer(Uint8 player)
 {
-    if (playerNumber >=0 && playerNumber < playerpool.size())
-    {
-        return playerpool[playerNumber];
-    }
-    // Return NULL
-    return 0;
+	if (player < playerpool.size()){
+		return playerpool[player];
+	}
+	return 0;
 }
 
 Uint8 PlayerPool::getUnitpalNum(Uint8 player) const
@@ -642,15 +557,15 @@ Uint8 PlayerPool::getStructpalNum(Uint8 player) const
 /**
  * Return if the Local player has WON the mission
  */
-/*bool PlayerPool::hasWon() const
+bool PlayerPool::hasWon() const
 {
 	return won;
-}*/
+}
 
 /**
  * Return if the Local player has LOST the mission
  */
-/*bool PlayerPool::hasLost() const
+bool PlayerPool::hasLost() const
 {
 	return lost;
-}*/
+}

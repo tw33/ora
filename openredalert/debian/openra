@@ -1,3 +1,2 @@
 #!/bin/sh
-cd /usr/share/games/openra
-./openredalert $@
+exec /usr/share/games/openredalert/openredalert $@

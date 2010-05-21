@@ -30,7 +30,6 @@
 #include "UnitAndStructurePool.h"
 #include "Unit.hpp"
 #include "InfantryGroup.h"
-#include "UnitType.h"
 
 namespace p {
 	extern ActionEventQueue * aequeue;
@@ -82,10 +81,9 @@ void MoveAnimEvent::stop()
 
 void MoveAnimEvent::run()
 {
-    Sint8 uxoff;
-    Sint8 uyoff;
+    Sint8 uxoff, uyoff;
     Uint8 oldsubpos;
-    Uint8 NewSubpos;
+	Uint8 NewSubpos;
 
     waiting = false;
     if( !un->isAlive() ) {
@@ -94,7 +92,7 @@ void MoveAnimEvent::run()
     }
 
     if (path == 0) {
-        p::uspool->setCostCalcOwnerAndType(un->getOwner(), 0);
+        p::uspool->setCostCalcOwnerAndType(un->owner, 0);
         path = new Path(un, un->getPos(), dest, range);
         if( !path->empty() ) {
             startMoveOne(false);
@@ -184,7 +182,7 @@ void MoveAnimEvent::startMoveOne(bool wasblocked)
     newpos = p::uspool->preMove(un, path->top(), &xmod, &ymod, &BlockingUnit);
 
 #if 0
-	if ( un->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum() ){
+	if ( un->getOwner() == p::ppool->getLPlayerNum() ){
 		Uint16 x, y;
 		p::ccmap->translateFromPos(newpos, &x, &y);
 		printf ("%s line %i: Newpos = %i [%i:%i]\n", __FILE__, __LINE__, newpos, x, y);
@@ -193,7 +191,7 @@ void MoveAnimEvent::startMoveOne(bool wasblocked)
     if( newpos == 0xffff ) {
         delete path;
         path = NULL;
-        p::uspool->setCostCalcOwnerAndType(un->getOwner(), 0);
+        p::uspool->setCostCalcOwnerAndType(un->owner, 0);
         path = new Path(un, un->getPos(), dest, range);
         pathinvalid = false;
         if( path->empty() ) {
@@ -235,7 +233,7 @@ void MoveAnimEvent::startMoveOne(bool wasblocked)
 #else
     face = (32-(path->top() << 2))&0x1f;
 
-//	if (un->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum())
+//	if (un->getOwner() == p::ppool->getLPlayerNum())
 //		printf ("%s line %i: TurnAnimEvent face(dir) = %i, path->top = %i, (path->top() << 2) = %i\n", __FILE__, __LINE__, face, path->top(), (path->top() << 2));
 #endif
     path->pop();
@@ -261,7 +259,7 @@ void MoveAnimEvent::startMoveOne(bool wasblocked)
 //            if( (delta <= (Sint8)((loopend+1)/8)) || (delta >= (Sint8)(loopend*7/8))) {
 		// Don't try to turn if we are already turning
         if( curface != face && un->turnanim1 == NULL) {
-            if( ((delta <= (Sint8)((loopend+1)/8)) || (delta >= (Sint8)(loopend*7/8))) || un->getType()->getPType() == UN_PLANE) {
+            if( ((delta <= (Sint8)((loopend+1)/8)) || (delta >= (Sint8)(loopend*7/8))) || un->getType()->getType() == UN_PLANE) {
 #else
         Uint8 curface = (un->getImageNum(0)&0x1f);
         Uint8 delta = (abs(curface-face))&0x1f;
@@ -293,7 +291,7 @@ void MoveAnimEvent::moveDone()
 
     if (pathinvalid) {
         delete path;
-        p::uspool->setCostCalcOwnerAndType(un->getOwner(), 0);
+        p::uspool->setCostCalcOwnerAndType(un->owner, 0);
         path = new Path(un, un->getPos(), dest, range);
         pathinvalid = false;
     }
@@ -302,7 +300,7 @@ void MoveAnimEvent::moveDone()
     } else {
         if( dest != un->getPos() && !stopping ) {
             delete path;
-            p::uspool->setCostCalcOwnerAndType(un->getOwner(), 0);
+            p::uspool->setCostCalcOwnerAndType(un->owner, 0);
             path = new Path(un, un->getPos(), dest, range);
             pathinvalid = false;
         }

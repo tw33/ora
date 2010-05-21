@@ -20,7 +20,7 @@
 #include <string>
 
 #include "misc/Compression.hpp"
-#include "vfs/vfs.h" // to use VFSUtils::VFS_Open()
+#include "vfs/vfs.h" // to use VFS_Open()
 #include "vfs/VFile.h" // to use VFile
 #include "video/ImageNotFound.h" // to use ImageNotFound
 
@@ -30,18 +30,17 @@ using std::string;
  * @param fname Name of the file to load
  * @param scaleq Scale factor, if caleq = -1 there are no scale factor
  */
-CPSImage::CPSImage(string fname, int scaleq) :
-cpsdata(0), image(0) 
-{
+CPSImage::CPSImage(const char* fname, int scaleq) :
+cpsdata(0), image(0) {
     
     // Copy the scaler factor
     this->scaleq = scaleq;
     
     // Open the image file
-    VFile* imgfile = VFSUtils::VFS_Open(fname.c_str());
+    VFile* imgfile = VFSUtils::VFS_Open(fname);
     // If no file loaded throw an error
     if (imgfile == 0) {
-        throw ImageNotFound("CPSImage: Image [" + fname + "] not found.");
+        throw ImageNotFound("CPSImage: Image [" + string(fname) + "] not found.");
     }
     
     // Get the size
@@ -75,8 +74,7 @@ cpsdata(0), image(0)
 
 /**
  */
-CPSImage::~CPSImage() 
-{
+CPSImage::~CPSImage() {
     delete[] cpsdata;
     
     if (image != 0) {
@@ -87,10 +85,8 @@ CPSImage::~CPSImage()
 
 /**
  */
-SDL_Surface* CPSImage::getImage() 
-{
-    if (image == 0) 
-    {
+SDL_Surface* CPSImage::getImage() {
+    if (image == 0) {
         loadImage();
     }
     return image;
@@ -98,8 +94,7 @@ SDL_Surface* CPSImage::getImage()
 
 /**
  */
-void CPSImage::loadImage() 
-{
+void CPSImage::loadImage() {
     Uint32 len;
     Uint8* imgsrc;
     Uint8 *imgdst;
@@ -133,12 +128,11 @@ void CPSImage::loadImage()
 
 /**
  */
-void CPSImage::readPalette() 
-{    
+void CPSImage::readPalette() {
+    Uint16 i;
+    
     offset = 10;
-
-    for (unsigned int i = 0; i < 256; i++) 
-    {
+    for (i = 0; i < 256; i++) {
         palette[i].r = cpsdata[offset];
         palette[i].g = cpsdata[offset+1];
         palette[i].b = cpsdata[offset+2];

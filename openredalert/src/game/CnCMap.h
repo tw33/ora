@@ -26,30 +26,17 @@
 #include "SDL/SDL_video.h"
 
 #include "triggers.h"
-#include "MiniMapClipping.h"
+#include "video/SHPImage.h"
+#include "game/MiniMapClipping.h"
+#include "game/Unit.hpp"
 #include "misc/INIFile.h"
 #include "misc/gametypes.h"
-#include "video/SHPImage.h"
-#include "Trigger.hpp"
 
 class CellTrigger;
 class LoadingScreen;
 class CnCMap;
 class MissionData;
 class TemplateImage;
-class PlayerPool;
-class AiCommand;
-class Unit;
-
-
-using OpenRedAlert::Game::Trigger;
-namespace OpenRedAlert
-{
-namespace Game
-{
-class Trigger;
-}
-}
 
 using std::string;
 
@@ -114,10 +101,8 @@ struct ScrollBookmark {
 };
 
 struct ScrollData {
-    Uint16 maxx;
-    Uint16 maxy;
-    Uint16 curx;
-    Uint16 cury;
+    Uint16 maxx, maxy;
+    Uint16 curx, cury;
     Uint16 maxxtileoffs;
     Uint16 maxytileoffs;
     Uint16 curxtileoffs;
@@ -139,8 +124,7 @@ typedef std::vector<TemplateTilePair* > TemplateTileCache;
 /**
  * Map in Red Alert
  */
-class CnCMap 
-{
+class CnCMap {
 public:
     CnCMap();
     ~CnCMap();
@@ -150,9 +134,9 @@ public:
 
     // Comments with "C/S:" at the start are to do with the client/server split.
     // C/S: Members used in both client and server
-    void loadMap(const string& mapname, LoadingScreen* lscreen);
+    void loadMap(const char* mapname, LoadingScreen* lscreen);
 
-    const MissionData& getMissionData() const;
+    MissionData* getMissionData() ;
 
     bool isLoading() const ;
 
@@ -189,8 +173,7 @@ public:
 	/** C/S: These functions are client only*/
 	Uint32 getTerrainOverlay( Uint32 pos ) ;
 
-    /** Return true if this map is in snow theme */
-    bool SnowTheme() const;
+    bool SnowTheme();
 
     SDL_Surface *getMapTile( Uint32 pos );
     SDL_Surface *getShadowTile(Uint8 shadownum);
@@ -204,9 +187,6 @@ public:
 	void setTriggerByName(string TriggerName, RA_Tiggers *Trig);
 
     RA_Tiggers* getTriggerByNumb(int TriggerNumb);
-
-    /** Return the trigger pool */
-    vector<Trigger*>* getTriggerPool();
 
     /**
      * In red alert when type is bigger the 4 it is normal ore,
@@ -273,24 +253,17 @@ public:
     /** Checks the WW coord is valid */
     bool validCoord(Uint16 tx, Uint16 ty) const;
     /** Converts a WW coord into a more flexible coord */
-    unsigned int normaliseCoord(unsigned int linenum) const;
+    Uint32 normaliseCoord(Uint32 linenum) const;
     /** Converts a WW coord into a more flexible coord */
-    unsigned int normaliseCoord(unsigned int tx, unsigned int ty) const;
-    /** Translate coordinate */
-    void translateCoord(unsigned int linenum, unsigned int* tx, unsigned int* ty) const;
+    Uint32 normaliseCoord(Uint16 tx, Uint16 ty) const;
+    void translateCoord(Uint32 linenum, Uint16* tx, Uint16* ty) const;
 
     /** Return the number with string of a COMMAND */
     Uint8 UnitActionToNr(const string action);
 
     /** Return true if it's the last mission of the game */
     bool isEndOfGame();
-    
-    /** Return the PlayerPool of the map */
-    PlayerPool* getPlayerPool() const;
-    
 private:
-    vector<Trigger*>* triggerPool;
-    
     enum {
     	HAS_OVERLAY=0x100,
     	HAS_TERRAIN=0x200
@@ -303,25 +276,25 @@ private:
     MissionData* missionData;
 
     /** Load the ini part of the map */
-    void loadIni(INIFile* inifile);
+    void loadIni();
 
     /** The map section of the ini */
-    void simpleSections(INIFile* inifile);
+    void simpleSections(INIFile *inifile);
 
     /** The advanced section of the ini*/
-    void advancedSections(INIFile* inifile);
+    void advancedSections(INIFile *inifile);
 
     /** Load the bin part of the map (TD)*/
     void loadBin();
 
     /** Load the overlay section of the map (TD)*/
-    void loadOverlay(INIFile* inifile);
+    void loadOverlay(INIFile *inifile);
 
     /** Extract RA map data*/
-    void unMapPack(INIFile* inifile);
+    void unMapPack(INIFile *inifile);
 
     /** Extract RA overlay data*/
-    void unOverlayPack(INIFile* inifile);
+    void unOverlayPack(INIFile *inifile);
 
     /** Load RA TeamTypes */
     void loadTeamTypes(INIFile* fileIni);
@@ -384,7 +357,7 @@ private:
 
     vector<Uint32> overlaymatrix;
 
-    vector<RA_Tiggers*> RaTriggers;
+    vector<RA_Tiggers> RaTriggers;
 
     vector<RA_Teamtype> RaTeamtypes;
 
@@ -430,9 +403,6 @@ private:
 
 	/** only used in: Uint8 CnCMap::absScroll(Sint16 dx, Sint16 dy, Uint8 border)*/
     double fmax;
-    
-    /** Pool of the player of the map */
-    PlayerPool* playerPool;
 };
 
 #endif //CNCMAP_H

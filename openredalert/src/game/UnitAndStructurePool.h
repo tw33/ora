@@ -98,20 +98,20 @@ public:
     bool createReinforcements(RA_Teamtype* Team);
     
     /** Create a structure in a map with this pool */
-    bool createStructure(const char* typen, Uint16 cellpos, unsigned int owner,
+    bool createStructure(const char* typen, Uint16 cellpos, Uint8 owner,
                 Uint16 health, Uint8 facing, bool makeanim, string trigger_name);
     
     /** Create a structure in a map with this pool */
-    bool createStructure(StructureType* type, Uint16 cellpos, unsigned int owner,
+    bool createStructure(StructureType* type, Uint16 cellpos, Uint8 owner,
             Uint16 health, Uint8 facing, bool makeanim, string trigger_name);
     
     
     /** Create a Unit and return it or return NULL */
     Unit* createUnit(const char* typen, Uint16 cellpos, Uint8 subpos,
-            unsigned int owner, Uint16 health, Uint8 facing, Uint8 action, string trigger_name);
+            Uint8 owner, Uint16 health, Uint8 facing, Uint8 action, string trigger_name);
     /** Create a Unit and return it or return NULL */
     Unit* createUnit(UnitType* type, Uint16 cellpos, Uint8 subpos,
-    		unsigned int owner, Uint16 health, Uint8 facing, Uint8 action, string trigger_name);
+    		Uint8 owner, Uint16 health, Uint8 facing, Uint8 action, string trigger_name);
     
     
     /** Create a trigger on a cell */
@@ -137,7 +137,7 @@ public:
 
 
 	bool cellOccupied (Uint32 cell);
-	Unit* getGroundUnitAt(unsigned int cell, Uint8 subcell = 0 );
+	Unit* getGroundUnitAt ( Uint32 cell, Uint8 subcell = 0 );
 	Unit* getFlyingAt ( Uint32 cell, Uint8 subcell = 0 );
 	Structure* getStructureAt(Uint32 cell, Uint8 subcell = 0, bool wall = false);
 
@@ -148,13 +148,8 @@ public:
     Uint16 preMove(Unit *un, Uint8 dir, Sint8 *xmod, Sint8 *ymod, Unit **BlockingUnit);
     Uint8 postMove(Unit *un, Uint16 newpos);
     void abortMove(Unit* un, Uint32 pos);
-    
-    /** Return the UnitType with the specified name */
-    UnitType* getUnitTypeByName(const string& unitname);
-    
-    /** Return the StructureType with the specified name */
-    StructureType* getStructureTypeByName(const string& structname);
-    
+    UnitType* getUnitTypeByName(const char* unitname);
+    StructureType* getStructureTypeByName(const char* structname);
     UnitOrStructureType* getTypeByName(const char* typen);
     bool freeTile(Uint16 pos) const ;
     Uint16 getTileCost( Uint16 pos, Unit* excpUn ) const;
@@ -179,9 +174,9 @@ public:
     void generateProductionGroups();
 
     /** Used by the sidebar to know units */
-    vector<string> getBuildableUnits(Player* pl);
+    vector<const char*> getBuildableUnits(Player* pl);
     /** Used by the sidebar to know structures */
-    vector<string> getBuildableStructures(Player* pl);
+    vector<const char*> getBuildableStructures(Player* pl);
 
     // unit is removed from map (to be stored in transport)
     void hideUnit(Unit* un);
@@ -196,14 +191,13 @@ private:
 	void updateWalls(Structure* st, bool add, CnCMap* theMap);
 	    
 	/** String which keep 5 lettres of the theater. Many Graphics depends of theater */
-	string theaterext;
+	char theaterext[5];
 	    
     vector<UnitAndStructureMat> unitandstructmat;
 
     vector<Structure *> structurepool;
-    //vector<StructureType *> structuretypepool;
-    //map<string, Uint16> structname2typenum;
-	map<string, StructureType *> structuretypepool;
+    vector<StructureType *> structuretypepool;
+    map<string, Uint16> structname2typenum;
 
     vector<Unit *> unitpool;
     vector<UnitType *> unittypepool;

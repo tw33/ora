@@ -27,7 +27,6 @@
 #include "Sidebar.h"
 
 #include "game/GameMode.h"
-#include "game/MissionData.h"
 #include "game/CnCMap.h"
 #include "game/Dispatcher.h"
 #include "include/Logger.h"
@@ -39,14 +38,11 @@
 #include "game/InfantryGroup.h"
 #include "video/ImageCache.h"
 #include "video/MessagePool.h"
-#include "misc/config.h"
+#include "include/config.h"
 #include "game/Player.h"
 #include "game/ConStatus.h"
 #include "game/BQueue.h"
 #include "game/UnitAndStructurePool.h"
-#include "game/UnitType.h"
-
-using Sound::SoundEngine;
 
 /* The defines were introduced in SDL 1.2.5, but should work with all
  * versions since mousewheel support was added.
@@ -61,18 +57,13 @@ using Sound::SoundEngine;
 bool Input::drawing = false;
 SDL_Rect Input::markrect;
 
-namespace p {
-    extern CnCMap* ccmap;
-}
-
 namespace pc {
     extern ConfigType Config;
     extern Cursor* cursor;
     extern MessagePool* msg;
     extern Sidebar* sidebar;
     extern ImageCache* imgcache;
-    extern SoundEngine* sfxeng;
-
+    extern Sound::SoundEngine* sfxeng;
 }
 extern Logger * logger;
 extern bool GlobalVar[100];
@@ -89,12 +80,12 @@ Input::Input(Uint16 screenwidth, Uint16 screenheight, SDL_Rect *maparea) :
     height(screenheight),
     done(0),
     donecount(0),
-    finaldelay(200),
+    finaldelay(1000),
     gamemode(p::ccmap->getGameMode()),
     maparea(maparea),
     tabwidth(pc::sidebar->getTabLocation()->w),
     tilewidth(p::ccmap->getMapTile(0)->w),
-    lplayer(p::ccmap->getPlayerPool()->getLPlayer()),
+    lplayer(p::ppool->getLPlayer()),
     kbdmod(k_none),
     lmousedown(m_none),
     rmousedown(m_none),
@@ -108,17 +99,8 @@ Input::Input(Uint16 screenwidth, Uint16 screenheight, SDL_Rect *maparea) :
 	if (pc::Config.gamemode == GAME_MODE_SINGLE_PLAYER)
 	{
 		logger->gameMsg("MISSIONS ARE NOT FULLY IMPLEMENTED YOU CAN CHEAT NOW.");
-		logger->gameMsg("PRESS F9 TO GO TO THE NEXT MISSION.");		
+		logger->gameMsg("PRESS F9 TO GO TO THE NEXT MISSION.");
 	}
-	
-	
-	
-	//logger->gameMsg("LOCAL PLAYER = %s.", lplayer->getName().c_str());
-	logger->gameMsg("Input PLAYER = %s.", lplayer->getName().c_str());
-	logger->gameMsg("map local PLAYER = %s.", p::ccmap->getMissionData().player.c_str());
-		
-		
-	
 
 
 
@@ -270,15 +252,15 @@ void Input::handle()
                 if (gamemode == 0) {
                     break;
                 }
-                Player* tplayer = p::ccmap->getPlayerPool()->getPlayer(selected->getOwner());
+                Player* tplayer = p::ppool->getPlayer(selected->getOwner());
                 if (tplayer == 0) {
                     break;
                 }
                 if (lplayer->allyWithPlayer(tplayer)) {
-                    logger->gameMsg("%s allied with player %s",lplayer->getName().c_str(),tplayer->getName().c_str());
+                    logger->gameMsg("%s allied with player %s",lplayer->getName(),tplayer->getName());
                 } else {
                     if (lplayer->unallyWithPlayer(tplayer)) {
-                        logger->gameMsg("%s declared war on player %s",lplayer->getName().c_str(),tplayer->getName().c_str());
+                        logger->gameMsg("%s declared war on player %s",lplayer->getName(),tplayer->getName());
                     } else {
                         // tried to unally with self
                     }
@@ -380,12 +362,11 @@ void Input::handle()
                     p::uspool->showMoves();
                     break;
                 case SDLK_F9:
-                    p::ccmap->getPlayerPool()->getLPlayer()->setVictorious(true);
+                    p::ppool->playerVictorious(p::ppool->getLPlayer());
                     break;
                 case SDLK_F10:
-                	//p::ccmap->getPlayerPool()->getLPlayer()->setVictorious(false);
-                    p::ccmap->getPlayerPool()->getLPlayer()->setMoney(10000);
-                    break;
+                	p::ppool->playerDefeated(p::ppool->getLPlayer());
+                	break;
                 // Debug for blobals variables
                 case SDLK_F11:
                 	radarstat = 1;
@@ -510,7 +491,7 @@ void Input::handle()
     }
 
     sdir = CnCMap::s_none;
-    keystate = SDL_GetKeyState(0);
+    keystate = SDL_GetKeyState(NULL);
     if (keystate[SDLK_LEFT])
         sdir |= CnCMap::s_left;
     else if (keystate[SDLK_RIGHT])
@@ -531,7 +512,7 @@ void Input::handle()
         selected->checkSelection();
     }
 
-    if (p::ccmap->getPlayerPool()->pollSidebar()) {
+    if (p::ppool->pollSidebar()) {
         pc::sidebar->UpdateSidebar();
     }
 
@@ -539,7 +520,7 @@ void Input::handle()
     updateMousePos();
 
     // Get the stat of the radar
-    radarstat = p::ccmap->getPlayerPool()->statRadar();
+    radarstat = p::ppool->statRadar();
     switch (radarstat) {
     case 0: // do nothing
         break;
@@ -564,15 +545,12 @@ void Input::handle()
     }
 
 
-    // Get local player
-    Player* lPlayer = p::ccmap->getPlayerPool()->getLPlayer();
-    if (lPlayer->isVictorious() || lPlayer->isDefeated()) 
-    {
+
+    if( p::ppool->hasWon() || p::ppool->hasLost() ) {
         ++donecount;
     }
     if (donecount == 1) {
-        if (lPlayer->isVictorious()) 
-        {
+        if (p::ppool->hasWon()) {
 		pc::sfxeng->PlaySound(pc::Config.MissionWon);
 		//logger->gameMsg("MISSION ACCOMPLISHED");
         } else {
@@ -580,13 +558,8 @@ void Input::handle()
 		//logger->gameMsg("MISSION FAILED");
         }
     }
-
-    // test if it's over
-    if (donecount > finaldelay) 
-    {
+    if (donecount > finaldelay) {
         done = 1;
-        // Reset donecount
-        donecount = 0;
     }
 }
 
@@ -743,9 +716,9 @@ void Input::clickMap(int mx, int my)
 	//
 	if (selected->numbUnits() == 1)
 	{
-		if (selected->getUnit(0)->getType()->getName() == "MEDI" &&
-				selected->getUnit(0)->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum() &&
-				p::uspool->getUnitAt(pos) != 0)
+		if (strcmp ((char*)selected->getUnit(0)->getType()->getTName(), "MEDI") == 0 &&
+				selected->getUnit(0)->getOwner() == p::ppool->getLPlayerNum() &&
+				p::uspool->getUnitAt(pos) != NULL)
 		{
 			if (p::uspool->getUnitAt(pos)->getType()->isInfantry() &&
 				p::uspool->getUnitAt(pos)->getHealth() < p::uspool->getUnitAt(pos)->getType()->getMaxHealth())
@@ -758,10 +731,9 @@ void Input::clickMap(int mx, int my)
 
 		if (selected->getUnit(0)->getHealth() <  selected->getUnit(0)->getType()->getMaxHealth() &&
 			p::uspool->getStructureAt(pos)!=NULL &&
-			selected->getUnit(0)->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum())
+			selected->getUnit(0)->getOwner() == p::ppool->getLPlayerNum())
 		{
-			if (p::uspool->getStructureAt(pos)->getType()->getName() == "FIX")
-			{
+			if (strcmp ((char*)p::uspool->getStructureAt(pos)->getType()->getTName(), "FIX") == 0 ){
 				//printf ("%s line %i: I am here\n", __FILE__, __LINE__);
 				selected->getUnit(0)->Repair (p::uspool->getStructureAt(pos));
 				return;
@@ -770,7 +742,7 @@ void Input::clickMap(int mx, int my)
 
 		// Check  if we need to harvest!!
 		if (selected->getUnit(0)->IsHarvester() &&
-			selected->getUnit(0)->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum())
+			selected->getUnit(0)->getOwner() == p::ppool->getLPlayerNum())
 		{
 			selected->getUnit(0)->Harvest(pos, 0);
 			selected->getUnit(0)->doRandTalk(TB_ack);
@@ -789,8 +761,7 @@ void Input::clickMap(int mx, int my)
 
 
 		// Check if this unit can infiltrate
-                UnitType* theType = static_cast<UnitType*>(selected->getUnit(0)->getType());
-		if (theType->isInfiltrate() == true)
+		if (selected->getUnit(0)->getType()->isInfiltrate() == true)
 		{
 			// If their are a structure at this position
 			if (p::uspool->getStructureAt(pos) != 0)
@@ -854,12 +825,10 @@ void Input::clickMap(int mx, int my)
     curunit = p::uspool->getUnitAt(pos, subpos);
     curstructure = p::uspool->getStructureAt(pos, selected->getWall());
     InfantryGroup *ig = p::uspool->getInfantryGroupAt(pos);
-    if (ig && curunit == 0)
-    {
+    if (ig && curunit == NULL) {
         curunit = ig->GetNearest(subpos);
-        if (curunit->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum()) 
-        {
-            curunit = 0;
+        if (curunit->getOwner() == p::ppool->getLPlayerNum()) {
+            curunit = NULL;
         }
     }
 
@@ -867,11 +836,9 @@ void Input::clickMap(int mx, int my)
 	//
 	// Handle selling and repairing cursor states
 	//
-	if (pc::sidebar->getSpecialButtonState(1) == 2)
-        {
-               	if (curstructure != 0)
-                {
-			if (curstructure->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum()){
+	if (pc::sidebar->getSpecialButtonState(1) == 2 ){
+               	if (curstructure != NULL){
+			if (curstructure->getOwner() == p::ppool->getLPlayerNum()){
 				printf ("Repair curstructure\n");
 				curstructure->repair();
 				pc::sidebar->setSpecialButtonState(1, 0);
@@ -882,7 +849,7 @@ void Input::clickMap(int mx, int my)
 		}
 	}else if (pc::sidebar->getSpecialButtonState(2) == 2 ){
                	if (curstructure != NULL){
-			if (curstructure->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum()){
+			if (curstructure->getOwner() == p::ppool->getLPlayerNum()){
 				printf ("Sell curstructure\n");
 				curstructure->sell();
 				pc::sidebar->setSpecialButtonState(2, 0);
@@ -897,11 +864,11 @@ void Input::clickMap(int mx, int my)
 
     if (curunit != 0)
     {
-        enemy = curunit->getOwner() != p::ccmap->getPlayerPool()->getLPlayerNum();
+        enemy = curunit->getOwner() != p::ppool->getLPlayerNum();
         if (enemy) {
             if (selected->canAttack() && (
                         !(lplayer->isAllied(
-                              p::ccmap->getPlayerPool()->getPlayer(curunit->getOwner()))
+                              p::ppool->getPlayer(curunit->getOwner()))
                          ) || kbdmod == k_ctrl) ) {
                 selected->attackUnit(curunit);
                 tmpunit = selected->getRandomUnit();
@@ -949,9 +916,7 @@ void Input::clickMap(int mx, int my)
                 pc::sfxeng->PlaySound(((UnitType *)curunit->getType())->getRandTalk(TB_report));
                 sndplayed = true;
             }
-        } 
-        else 
-        if ((!selected->isEnemy()) && (curunit->canDeploy(p::ccmap)))
+        } else if ((!selected->isEnemy()) && (curunit->canDeploy(p::ccmap)))
         {
             selected->purge(curunit);
             selected->removeUnit(curunit);
@@ -960,12 +925,12 @@ void Input::clickMap(int mx, int my)
         }
     } else if (curstructure != 0)
     {
-    	enemy = curstructure->getOwner() != p::ccmap->getPlayerPool()->getLPlayerNum();
+    	enemy = curstructure->getOwner() != p::ppool->getLPlayerNum();
 
         if( enemy ) {
             if (selected->canAttack() && (
                         !(lplayer->isAllied(
-                              p::ccmap->getPlayerPool()->getPlayer(curstructure->getOwner()))
+                              p::ppool->getPlayer(curstructure->getOwner()))
                          ) ||
                         kbdmod == k_ctrl) ) {
                 selected->attackStructure(curstructure);
@@ -1111,63 +1076,59 @@ void Input::setCursorByPos(int mx, int my)
         {
         	// If their are just one unit selected and it's a player unit
         	if (selected->numbUnits() == 1 &&
-        		selected->getUnit(0)->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum())
+        		selected->getUnit(0)->getOwner() == p::ppool->getLPlayerNum())
         	{
-                // If the cursor is under a structure
-                if (p::uspool->getStructureAt(pos) != 0)
-                {
-                    //
-                    // Handle Infiltrate
-                    // (if the selected unit can infiltrate)
-                    UnitType* theType = dynamic_cast<UnitType*> (selected->getUnit(0)->getType());
-                    if (theType->isInfiltrate() == true)
-                    {
-                        // ENGINEER
-                        if (selected->getUnit(0)->getType()->getName() == "E6")
-                        {
-                            // if structure is enemy structure
-                            if (p::uspool->getStructureAt(pos)->getOwner() != p::ccmap->getPlayerPool()->getLPlayerNum())
-                            {
-                                pc::cursor->setCursor("red_enter");
-                                return;
-                            }
-                            else
-                            {
-                                pc::cursor->setCursor("enter");
-                                return;
-                            }
-                        }
+        		// If the cursor is under a structure
+        		if (p::uspool->getStructureAt(pos) != 0)
+        		{
+        			//
+        			// Handle Infiltrate
+        			// (if the selected unit can infiltrate)
+        			if (selected->getUnit(0)->getType()->isInfiltrate() == true)
+        			{
+        				// ENGINEER
+        				if (strcmp((char*)selected->getUnit(0)->getType()->getTName(), "E6") == 0)
+        				{
+        					// if structure is enemy structure
+        					if (p::uspool->getStructureAt(pos)->getOwner() != p::ppool->getLPlayerNum())
+        					{
+        						pc::cursor->setCursor("red_enter");
+        						return;
+        					} else {
+        						pc::cursor->setCursor("enter");
+        						return;
+        					}
+        				}
 
-                        // SPY
-                        if (selected->getUnit(0)->getType()->getName() == "SPY")
-                        {
-                            // if structure is enemy structure
-                            if (p::uspool->getStructureAt(pos)->getOwner() != p::ccmap->getPlayerPool()->getLPlayerNum())
-                            {
-                                pc::cursor->setCursor("red_enter");
-                                return;
-                            }
-                        }
+        				// SPY
+        				if (strcmp((char*)selected->getUnit(0)->getType()->getTName(), "SPY") == 0)
+        				{
+        					// if structure is enemy structure
+        					if (p::uspool->getStructureAt(pos)->getOwner() != p::ppool->getLPlayerNum())
+        					{
+        						pc::cursor->setCursor("red_enter");
+        						return;
+        					}
+        				}
 
-                        // if C4
-                        if (theType->isC4())
-                        {
-                            // if structure is enemy structure
-                            if (p::uspool->getStructureAt(pos)->getOwner() != p::ccmap->getPlayerPool()->getLPlayerNum())
-                            {
-                                pc::cursor->setCursor("bom");
-                                return;
-                            }
-                        }
-                    }
-                }
+        				// if C4
+        				if (selected->getUnit(0)->getType()->isC4())
+        				{
+        					// if structure is enemy structure
+        					if (p::uspool->getStructureAt(pos)->getOwner() != p::ppool->getLPlayerNum())
+        					{
+        						pc::cursor->setCursor("bom");
+        						return;
+        					}
+        				}
+        			}
+        		}
 
 
         		// Handle FIX for all units
-        		if (selected->getUnit(0)->getHealth() <  selected->getUnit(0)->getType()->getMaxHealth() && p::uspool->getStructureAt(pos)!=NULL && selected->getUnit(0)->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum())
+        		if (selected->getUnit(0)->getHealth() <  selected->getUnit(0)->getType()->getMaxHealth() && p::uspool->getStructureAt(pos)!=NULL && selected->getUnit(0)->getOwner() == p::ppool->getLPlayerNum())
         		{
-        			if (p::uspool->getStructureAt(pos)->getType()->getName() == "FIX")
-        			{
+        			if (strcmp ((char*)p::uspool->getStructureAt(pos)->getType()->getTName(), "FIX") == 0 ){
         				pc::cursor->setCursor("enter");
         				return;
         			}
@@ -1175,12 +1136,12 @@ void Input::setCursorByPos(int mx, int my)
 
  				// We have one unit selected and it is a harvester
         		// ATTACK GOLD
- 				if (selected->getUnit(0)->IsHarvester() && p::ccmap->getResourceFrame(pos) != 0 && selected->getUnit(0)->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum()){
+ 				if (selected->getUnit(0)->IsHarvester() && p::ccmap->getResourceFrame(pos) != 0 && selected->getUnit(0)->getOwner() == p::ppool->getLPlayerNum()){
  					pc::cursor->setCursor("attack");
  					return;
  				}
  				// RETURN
- 				if (selected->getUnit(0)->IsHarvester() && p::uspool->getStructureAt(pos) != NULL && selected->getUnit(0)->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum()){
+ 				if (selected->getUnit(0)->IsHarvester() && p::uspool->getStructureAt(pos) != NULL && selected->getUnit(0)->getOwner() == p::ppool->getLPlayerNum()){
  					if (p::uspool->getStructureAt(pos)->isRefinery ())
  						pc::cursor->setCursor("enter");
  					return;
@@ -1193,7 +1154,7 @@ void Input::setCursorByPos(int mx, int my)
         	//
         	if (selected->numbUnits() == 1)
         	{
-        		if ((selected->getUnit(0)->getType()->getName() == "MEDI") && selected->getUnit(0)->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum() && (p::uspool->getUnitAt(pos) != 0))
+        		if (strcmp ((char*)selected->getUnit(0)->getType()->getTName(), "MEDI") == 0 && selected->getUnit(0)->getOwner() == p::ppool->getLPlayerNum() && p::uspool->getUnitAt(pos) != NULL)
         		{
         			if ( p::uspool->getUnitAt(pos)->getType()->isInfantry() && p::uspool->getUnitAt(pos)->getHealth() < p::uspool->getUnitAt(pos)->getType()->getMaxHealth())
         			{
@@ -1203,14 +1164,13 @@ void Input::setCursorByPos(int mx, int my)
         		}
         	}
 
-            if( lplayer->getMapVis()->at(pos) == true )
-            {
+            if( lplayer->getMapVis()[pos] ) {
                 curunit = p::uspool->getUnitAt(pos, subpos);
                 curstruct = p::uspool->getStructureAt(pos,selected->getWall());
                 InfantryGroup *ig = p::uspool->getInfantryGroupAt(pos);
                 if (ig && curunit == NULL) {
                     curunit = ig->GetNearest(subpos);
-                    if (curunit->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum()) {
+                    if (curunit->getOwner() == p::ppool->getLPlayerNum()) {
                         curunit = NULL;
                     }
                 }
@@ -1224,7 +1184,7 @@ void Input::setCursorByPos(int mx, int my)
 		//
 		if (pc::sidebar->getSpecialButtonState(1) == 2 ){
 			if (curstruct != NULL){
-				if (curstruct->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum() && curstruct->getHealth() < curstruct->getType()->getMaxHealth())
+				if (curstruct->getOwner() == p::ppool->getLPlayerNum() && curstruct->getHealth() < curstruct->getType()->getMaxHealth())
         				pc::cursor->setCursor("repair");
 				else
         				pc::cursor->setCursor("norepair");
@@ -1233,7 +1193,7 @@ void Input::setCursorByPos(int mx, int my)
 			return;
 		}else if (pc::sidebar->getSpecialButtonState(2) == 2 ){
                 	if (curstruct != NULL){
-				if (curstruct->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum())
+				if (curstruct->getOwner() == p::ppool->getLPlayerNum())
 					pc::cursor->setCursor("sell");
 				else
 					pc::cursor->setCursor("nosell");
@@ -1244,7 +1204,7 @@ void Input::setCursorByPos(int mx, int my)
 
 
             if( curunit != NULL ) {
-                enemy = !(lplayer->isAllied(p::ccmap->getPlayerPool()->getPlayer(curunit->getOwner())));
+                enemy = !(lplayer->isAllied(p::ppool->getPlayer(curunit->getOwner())));
                 if( !curunit->isSelected() ) {
                     if( selected->canAttack() && (enemy || (kbdmod == k_ctrl))) {
                         pc::cursor->setCursor("attack");
@@ -1264,18 +1224,15 @@ void Input::setCursorByPos(int mx, int my)
                         pc::cursor->setCursor("nomove");
                         return;
                     }
-                } 
-                else 
-                {
-                    if (curunit->getOwner() == p::ccmap->getPlayerPool()->getLPlayerNum())
+                } else {
+                    if (curunit->getOwner() == p::ppool->getLPlayerNum())
                     {
-                        if (dynamic_cast<UnitType*>(curunit->getType())->canDeploy())
+                        if (((UnitType*)curunit->getType())->canDeploy())
                         {
-                            if (curunit->canDeploy(p::ccmap))
-                            {
+                            if (curunit->canDeploy(p::ccmap))                             {
                                 pc::cursor->setCursor("deploy");
                             } else {
-                                pc::cursor->setCursor("nodeploy");
+                                pc::cursor->setCursor("nomove");
                             }
                             return;
                         } else {
@@ -1293,7 +1250,7 @@ void Input::setCursorByPos(int mx, int my)
 
                 }
             } else if( curstruct != NULL ) {
-                enemy = !(lplayer->isAllied(p::ccmap->getPlayerPool()->getPlayer(curstruct->getOwner())));
+                enemy = !(lplayer->isAllied(p::ppool->getPlayer(curstruct->getOwner())));
                 if( !curstruct->isSelected() ) {
                     if( selected->canAttack() && (enemy || (kbdmod == k_ctrl))) {
                         pc::cursor->setCursor("attack");
@@ -1343,8 +1300,7 @@ void Input::setCursorByPos(int mx, int my)
 			}else if (selected->canMove() && selected->areWaterBound()){
 				//printf ("%s line %i: Selected are water bound\n", __FILE__, __LINE__);
                 p::uspool->setCostCalcOwnerAndType(lplayer->getPlayerNum(),0);
-                if( p::ccmap->getCost(pos, selected->getRandomUnit()) < 0xfff0 || !lplayer->getMapVis()->at(pos)) 
-                {
+                if( p::ccmap->getCost(pos, selected->getRandomUnit()) < 0xfff0 || !lplayer->getMapVis()[pos]) {
                     pc::cursor->setCursor("move");
                 } else {
                     pc::cursor->setCursor("nomove");
@@ -1352,8 +1308,7 @@ void Input::setCursorByPos(int mx, int my)
                 return;
             } else if (selected->canMove()) {
                 p::uspool->setCostCalcOwnerAndType(lplayer->getPlayerNum(),0);
-                if( p::ccmap->getCost(pos) < 0xfff0 || !lplayer->getMapVis()->at(pos)) 
-                {
+                if( p::ccmap->getCost(pos) < 0xfff0 || !lplayer->getMapVis()[pos]) {
                     pc::cursor->setCursor("move");
                 } else {
                     pc::cursor->setCursor("nomove");
@@ -1392,7 +1347,7 @@ void Input::selectRegion()
             for( i = 0; i < 5; i++ ) {
                 un = p::uspool->getUnitAt(curpos, static_cast<Uint8>(i));
                 if( un != NULL ) {
-                    if( un->getOwner() != p::ccmap->getPlayerPool()->getLPlayerNum() ) {
+                    if( un->getOwner() != p::ppool->getLPlayerNum() ) {
                         continue;
                     }
                     selected->addUnit(un, false);
@@ -1411,40 +1366,41 @@ void Input::selectRegion()
 
 void Input::clickSidebar(int mx, int my, bool rightbutton)
 {
-    // Clear the selection of the player
-    selected->clearSelection();
+	Uint8		butclick;
+	createmode_t	createmode;
 
-    mx -= (width-tabwidth);
-    my -= pc::sidebar->getTabLocation()->h;
+	// Clear the selection of the player
+	selected->clearSelection();
+
+	mx -= (width-tabwidth);
+	my -= pc::sidebar->getTabLocation()->h;
 
 
-    Uint8 butclick = pc::sidebar->getSpecialButton(mx, my);
-    if (butclick != 255)
-    {
-        //printf ("%s line %i: Sidebar click, special button = %i\n", __FILE__, __LINE__, butclick);
-        if ((butclick == 1 && pc::sidebar->getSpecialButtonState(2) == 0) || 
-            (butclick == 2 && pc::sidebar->getSpecialButtonState(1) == 0) ||
-            (butclick == 3))
-        {
-            pc::sidebar->setSpecialButtonState(butclick, true);
-        }
-    }
+	butclick = pc::sidebar->getSpecialButton(mx, my);
+	if (butclick != 255){
+		printf ("%s line %i: Sidebar click, special button = %i\n", __FILE__, __LINE__, butclick);
+		if (butclick == 1 && pc::sidebar->getSpecialButtonState(2) == 0 || butclick == 2 && pc::sidebar->getSpecialButtonState(1) == 0 || butclick == 3){
+			pc::sidebar->setSpecialButtonState(butclick, true);
+		}
+	}
 
 
     butclick = pc::sidebar->getButton(mx, my);
-    if (butclick == 255) 
-    {
+    if (butclick == 255) {
         currentaction = a_none;
         return;
     }
 
-    // @todo find a more elegant way to do this, as scrolling will blank current place.
-    string placename= "xxxx";
-    createmode_t createmode;
+    /** @todo find a more elegant way to do this, as scrolling will blank
+     *  current place.
+     */
+    //placename = strdup("xxxx");
+    strncpy(placename, "xxxx", 4);
+    placename[4]=0; placename[5]=0;
     pc::sidebar->ClickButton(butclick, placename, &createmode);
 
-    // If the command is invalid and placename was not changed
-    if (CM_INVALID == createmode || (placename == "xxxx"))
+	// If the command is invalid and placename was not changed
+    if (CM_INVALID == createmode || (string(placename) == "xxxx"))
     {
         currentaction = a_none;
         return;
@@ -1513,7 +1469,7 @@ Uint16 Input::checkPlace(int mx, int my)
     Sint16 delta;
     Uint8 placexpos, placeypos;
     Uint8* placemat;
-    vector<bool>* buildable = lplayer->getMapBuildable();
+    vector<bool>& buildable = lplayer->getMapBuildable();
     Uint16 pos, curpos, placeoff;
     Uint8 subpos;
 
@@ -1586,8 +1542,7 @@ Uint16 Input::checkPlace(int mx, int my)
 					placemat[placeoff] = 4;
 					continue;
 				}
-				if (buildable->at(curpos) == true) 
-                                {
+				if (buildable[curpos]) {
 					++rangecount;
 				} else {
 					// Hmm inside fog or something --> make yellow

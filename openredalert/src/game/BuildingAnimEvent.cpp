@@ -27,16 +27,14 @@
 #include "Structure.h"
 #include "StructureType.h"
 #include "animinfo_t.h"
-#include "misc/config.h"
-
-using Sound::SoundEngine;
+#include "include/config.h"
 
 extern Logger *logger;
 
 namespace pc {
 	extern ConfigType Config;
 	extern CnCMap* ccmap;
-	extern SoundEngine* sfxeng;
+	extern Sound::SoundEngine* sfxeng;
 }
 namespace p {
 	extern ActionEventQueue* aequeue;
@@ -217,8 +215,7 @@ void BuildingAnimEvent::updateDamaged()
 
 animinfo_t BuildingAnimEvent::getaniminfo()
 {
-    StructureType* theType = dynamic_cast<StructureType*>(this->strct->getType());
-    return theType->getAnimInfo();
+	return this->strct->getType()->getAnimInfo();
 }
 
 StructureType* BuildingAnimEvent::getType()

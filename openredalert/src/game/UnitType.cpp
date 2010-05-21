@@ -23,7 +23,7 @@
 #include "SDL/SDL_types.h"
 #include "SDL/SDL_timer.h"
 
-#include "misc/common.h"
+#include "include/common.h"
 #include "CnCMap.h"
 #include "misc/INIFile.h"
 #include "include/Logger.h"
@@ -59,43 +59,53 @@ extern Logger * logger;
 
 /**
  */
-UnitType::UnitType(const string& typeName, INIFile* unitini) :
+UnitType::UnitType(const char *typeName, INIFile* unitini) :
 	UnitOrStructureType(),
 	shpnums(0),
+	name(0),
+	deploytarget(0),
 	c4(false)
 {
-    string tname = typeName;
     SHPImage* shpimage = 0;
-
+    Uint32 i;
     string shpname;
-
+#ifdef LOOPEND_TURN
+//    char* imagename;
+#endif
 	Uint32 shpnum;
 	Uint32 tmpspeed;
 
+	// Set deploy target to NULL
+	deploytarget = 0;
 
     // Ensure that there is a section in the ini file
     if (unitini->isSection(typeName) == false)
     {
     	// Log it
-    	logger->error("%s line %i: Unknown type: %s\n", __FILE__, __LINE__, typeName.c_str());
+    	logger->error("%s line %i: Unknown type: %s\n", __FILE__, __LINE__, typeName);
 
+        name = 0;
         shpnums = 0;
         shptnum = 0;
         return;
     }
 
-    // Set the internal name
-    this->setName(typeName);
+	tname = cppstrdup(typeName);
 
 
+	name = unitini->readString(tname, "name");
 
-	string tmp = unitini->readString(tname, "prerequisites", "");
-	Split(prereqs, tmp, ',');
+	char* tmp = unitini->readString(tname, "prerequisites");
+	if (0 != tmp)
+	{
+		prereqs = splitList(tmp, ',');
+		delete[] tmp;
+	}
 
 	unittype = unitini->readInt(tname, "unittype", 0);
 	if (0 == unittype)
 	{
-		logger->warning("No unit type specified for \"%s\"\n", tname.c_str());
+		logger->warning("No unit type specified for \"%s\"\n", tname);
 	}
 
 	numlayers = unitini->readInt(tname, "layers", 1);
@@ -119,7 +129,7 @@ UnitType::UnitType(const string& typeName, INIFile* unitini) :
 	pc::imagepool->push_back(shpimage);
 	shpnum <<= 16;
 
-	for(unsigned int i = 0; i < numlayers; i++)
+	for( i = 0; i < numlayers; i++ )
 	{
 		// get layer offsets from inifile
 		//shpnums[i] = pc::imagepool->size();
@@ -142,10 +152,14 @@ UnitType::UnitType(const string& typeName, INIFile* unitini) :
 	is_infantry = false;
 
 	//buildlevel = unitini->readInt(tname, "buildlevel", 99);
-	techLevel = unitini->readInt(tname, "TechLevel", -1);
+	techLevel = (Sint32)(unitini->readInt(tname, "TechLevel", (Uint32)-1));
 
 	tmp = unitini->readString(tname, "owners");
-	Split(owners, tmp, ',');
+	if (tmp != NULL)
+	{
+		owners = splitList(tmp, ',');
+		delete[] tmp;
+	}
 
 	if (unittype == 1)
 	{
@@ -181,7 +195,7 @@ UnitType::UnitType(const string& typeName, INIFile* unitini) :
 	}
 
 
-	string talkmode;
+	char* talkmode = 0;
 	if (is_infantry)
 	{
 		talkmode = unitini->readString(tname, "talkback", "Generic");
@@ -192,16 +206,15 @@ UnitType::UnitType(const string& typeName, INIFile* unitini) :
 		talkmode = unitini->readString(tname, "talkback", "Generic-Vehicle");
 		sight = unitini->readInt(tname, "sight", 5);
 	}
-	talkback = p::uspool->getTalkback(talkmode.c_str());
-	
-    maxhealth = unitini->readInt(tname, "health", 50);
-
-    setCost(unitini->readInt(tname, "cost", 0));
-    if (0 == getCost())
-    {
-        logger->error("\"%s\" has no cost, setting to 1\n", tname.c_str());
-	setCost(1);
-    }
+	talkback = p::uspool->getTalkback(talkmode);
+	delete[] talkmode;
+	maxhealth = unitini->readInt(tname, "health", 50);
+	cost = unitini->readInt(tname, "cost", 0);
+	if (0 == cost)
+	{
+		logger->error("\"%s\" has no cost, setting to 1\n", tname);
+		cost = 1;
+	}
 
 	// Set the turn speed
 	try
@@ -229,87 +242,114 @@ UnitType::UnitType(const string& typeName, INIFile* unitini) :
 		offset = (shpimage->getWidth()-24)>>1;
 	}
 
-    
-    doubleowned = (unitini->readYesNo(tname, "DoubleOwned", 0) == 1);
-	
+	char* downed = unitini->readString(tname, "DoubleOwned");
+	doubleowned = false;
+	if (downed == 0)
+	{
+		doubleowned = false;
+	}
+	else
+	{
+		//if (downed[0] == 'y' && downed[1] == 'e' && downed[2] == 's')
+		if (strcmp((char*)downed, "yes") == 0)
+			doubleowned = true;
+		delete[] downed;
+	}
 
-    // Read primary weapon
-    string priStr = unitini->readString(tname, "Primary", "");
-    if (priStr == "")
-    {
-        this->setPrimaryWeapon(0);
-    }
-    else
-    {
-        this->setPrimaryWeapon(p::weappool->getWeapon(priStr.c_str()));
-    }
-        
-    //
-    string secStr = unitini->readString(tname, "Secondary", "");
-    if (secStr == "")
-    {
-        this->setSecondaryWeapon(0);
-    }
-    else
-    {
-        this->setSecondaryWeapon(p::weappool->getWeapon(secStr.c_str()));
-    }
-    
-    
-    string deploytarget = unitini->readString(tname, "deploysto", "");
-    if (deploytarget.size() > 0)
-    {
-        deployable = true;
-        deploytype = p::uspool->getStructureTypeByName(deploytarget.c_str());
-    }
-    else
-    {
-        deployable = false;
-        deploytype = 0;
-    }
-    pipcolour = unitini->readInt(tname, "pipcolour", 0);
+	// primary weapon
+	char* miscnames;
+	// Read primary weapon
+	miscnames = unitini->readString(tname, "Primary");
+	if (miscnames == 0)
+	{
+		primary_weapon = 0;
+	}
+	else
+	{
+		primary_weapon = p::weappool->getWeapon(miscnames);
+		delete[] miscnames;
+	}
+	miscnames = unitini->readString(tname, "Secondary");
+	if (miscnames == 0)
+	{
+		secondary_weapon = NULL;
+	}
+	else
+	{
+		secondary_weapon = p::weappool->getWeapon(miscnames);
+		delete[] miscnames;
+	}
+	deploytarget = unitini->readString(tname, "deploysto");
+	if (deploytarget != NULL)
+	{
+		deployable = true;
+		deploytype = p::uspool->getStructureTypeByName(deploytarget);
+	}
+	pipcolour = unitini->readInt(tname, "pipcolour", 0);
 
-    // Read the armor
-    string charArmor = unitini->readString(tname, "Armour", "");
-    if (charArmor == "")
-        armour = AC_none;
-    else
-    {
-        if (string(charArmor) == "none")
-            armour = AC_none;
-        else if (string(charArmor) == "wood")
-            armour = AC_wood;
-        else if (string(charArmor) == "light")
-            armour = AC_light;
-        else if (string(charArmor) == "heavy")
-            armour = AC_heavy;
-        else if (string(charArmor) == "concrete")
-            armour = AC_concrete;
-    }
-    
-    
+	// Read the armor
+	char* charArmor = unitini->readString(tname, "Armour");
+	if (charArmor == 0)
+		armour = AC_none;
+	else
+	{
+		if (string(charArmor) == "none")
+			armour = AC_none;
+		else if (string(charArmor) == "wood")
+			armour = AC_wood;
+		else if (string(charArmor) == "light")
+			armour = AC_light;
+		else if (string(charArmor) == "heavy")
+			armour = AC_heavy;
+		else if (string(charArmor) == "concrete")
+			armour = AC_concrete;
+	}
+	delete[] charArmor;
 	valid = true;
 
 #ifdef LOOPEND_TURN
-	animinfo.loopend = unitini->readInt(typeName, "loopend", 31);
-	animinfo.loopend2 = unitini->readInt(typeName, "loopend2", 0);
+	animinfo.loopend = unitini->readInt(tname, "loopend", 31);
+	animinfo.loopend2 = unitini->readInt(tname, "loopend2", 0);
 
-	animinfo.animspeed = unitini->readInt(typeName, "animspeed", 3);
+	animinfo.animspeed = unitini->readInt(tname, "animspeed", 3);
 	animinfo.animspeed = abs(animinfo.animspeed);
 	animinfo.animspeed = (animinfo.animspeed>1 ? animinfo.animspeed : 2);
-	animinfo.animdelay = unitini->readInt(typeName, "delay", 0);
+	animinfo.animdelay = unitini->readInt(tname, "delay", 0);
 
-	animinfo.animtype = unitini->readInt(typeName, "animtype", 0);
-	animinfo.sectype = unitini->readInt(typeName, "sectype", 0);
+	animinfo.animtype = unitini->readInt(tname, "animtype", 0);
+	animinfo.sectype = unitini->readInt(tname, "sectype", 0);
 
-	animinfo.dmgoff = unitini->readInt(typeName, "dmgoff", ((shptnum[0]-1)>>1));
+	animinfo.dmgoff = unitini->readInt(tname, "dmgoff", ((shptnum[0]-1)>>1));
 #endif
 
-    // Read the C4 caract
-    this->c4 = (unitini->readYesNo(typeName, "C4", 0) == 1);
+	// Read the C4 caract
+	if (string(unitini->readString(tname, "C4", "no")) == "yes")
+	{
+		c4 = true;
+	} else {
+		c4 = false;
+	}
 
-    // Read the Infiltrate caracteristic
-    this->infiltrate = (unitini->readYesNo(typeName, "Infiltrate", 0) == 1);
+	// Read the Infiltrate caracteristic
+	if (string(unitini->readString(tname, "Infiltrate", "no")) == "yes" ||
+		string(unitini->readString(tname, "Infiltrate", "no")) == "Yes")
+	{
+		infiltrate = true;
+	} else {
+		infiltrate = false;
+	}
+}
+
+/**
+ */
+UnitType::UnitType(const UnitType& x)
+{
+}
+
+/**
+ */
+UnitType& UnitType::operator=(const UnitType& x)
+{
 }
 
 /**
@@ -317,26 +357,25 @@ UnitType::UnitType(const string& typeName, INIFile* unitini) :
  */
 UnitType::~UnitType()
 {
-   /* if (shpnums != 0)
-        delete[] shpnums;
-
-    if (shptnum != 0)
-        delete[] shptnum;
-
-    if (deploytarget != 0)
-        delete[] deploytarget;
-
-    for (unsigned int i = 0; i < owners.size(); ++i)
-    {
-        if (owners[i] != 0)
-            delete[] owners[i];
-    }
-
-    for (unsigned int i = 0; i < prereqs.size(); ++i)
-    {
-        if (prereqs[i] != 0)
-            delete[] prereqs[i];
-    }*/
+	Uint16 i;
+	if (name != NULL)
+		delete[] name;
+	if (shpnums != NULL)
+		delete[] shpnums;
+	if (shptnum != NULL)
+		delete[] shptnum;
+	if (deploytarget != NULL)
+		delete[] deploytarget;
+	for (i=0; i<owners.size(); ++i)
+	{
+		if (owners[i] != NULL)
+			delete[] owners[i];
+	}
+	for (i=0; i<prereqs.size(); ++i)
+	{
+		if (prereqs[i] != NULL)
+			delete[] prereqs[i];
+	}
 }
 
 const char* UnitType::getRandTalk(TalkbackType type) const
@@ -398,7 +437,17 @@ Uint16* UnitType::getSHPTNum()
         return shptnum;
 }
 
-vector<string> UnitType::getOwners() const
+const char* UnitType::getTName() const
+{
+        return tname;
+}
+
+const char* UnitType::getName() const
+{
+	return name;
+}
+
+vector<char*> UnitType::getOwners() const
 {
 	return owners;
 }
@@ -433,6 +482,24 @@ armor_t UnitType::getArmor() const
 	return armour;
 }
 
+Weapon* UnitType::getWeapon() const
+{
+	return getWeapon(true);
+}
+
+Weapon* UnitType::getWeapon(bool primary) const
+{
+	if (primary == true) {
+		return primary_weapon;
+	}
+	return secondary_weapon;
+}
+
+const char* UnitType::getDeployTarget() const
+{
+	return deploytarget;
+}
+
 StructureType* UnitType::getDeployType() const
 {
 	return deploytype;
@@ -460,8 +527,7 @@ vector<UnitType*> UnitType::getSpecificTypeAllow() const
 
 Uint8 UnitType::getPQueue() const
 {
-    // Return the production type (infantry/ship/vehicule/...)
-    return getPType();
+	return ptype;
 }
 
 bool UnitType::isC4() const

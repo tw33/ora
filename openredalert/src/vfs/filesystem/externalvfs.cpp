@@ -1,5 +1,6 @@
 // ExternalFiles.cpp
-//
+// 1.0
+
 //    This file is part of OpenRedAlert.
 //
 //    OpenRedAlert is free software: you can redistribute it and/or modify
@@ -25,7 +26,7 @@
 //why is lean_mean needed???
 #include <windows.h>
 #else
-#include <unistd.h>
+// #include <unistd.h>   // <-- Is this really needed ?
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -35,7 +36,7 @@
 
 #include "video/Renderer.h"
 #include "externalvfs.h"
-#include "misc/common.h"
+#include "include/common.h"
 
 #if _MSC_VER && _MSC_VER < 1300
 using namespace std;
@@ -327,8 +328,7 @@ int ExternalFiles::vfs_printf(Uint32 file, const char* fmt, va_list ap)
     return ret;
 }
 
-void ExternalFiles::flush(Uint32 file) 
-{
+void ExternalFiles::flush(Uint32 file) {
     fflush(openfiles[file].file);
 }
 
@@ -353,8 +353,7 @@ Uint32 ExternalFiles::getPos(Uint32 file) const
     return 0;
 }
 
-Uint32 ExternalFiles::getSize(Uint32 file) const 
-{
+Uint32 ExternalFiles::getSize(Uint32 file) const {
     // @todo Abstract this const implementation of operator[].
     openfiles_t::const_iterator i = openfiles.find(file);
     if (openfiles.end() != i) {
@@ -364,8 +363,7 @@ Uint32 ExternalFiles::getSize(Uint32 file) const
     return 0;
 }
 
-const char* ExternalFiles::getPath(Uint32 file) const 
-{
+const char* ExternalFiles::getPath(Uint32 file) const {
     // @todo Abstract this const implementation of operator[].
     openfiles_t::const_iterator i = openfiles.find(file);
     if (openfiles.end() != i) {
@@ -377,14 +375,10 @@ const char* ExternalFiles::getPath(Uint32 file) const
 
 const char *ExternalFiles::getArchiveType() const 
 {
-    return "external file";
+        return "external file";
 }
 
-Uint32 ExternalFiles::getFile(const char* fname)
-{
-    return getFile(fname, "rb");
-}
-
+Uint32 ExternalFiles::getFile(const char* fname) {return getFile(fname, "rb");}
 namespace ExtPriv {
 
 FILE* fcaseopen(string* name, const char* mode, Uint32 caseoffset) throw()
@@ -409,7 +403,7 @@ FILE* ret;
     // Skip over non-alpha chars.
     // @todo These are the old style text munging routines that are a) consise
     // and b) doesn't work with UTF8 filenames.
-    for (i=caseoffset;i<fname.length()&&!isalpha(fname[i]);++i) {}
+    for (i=caseoffset;i<fname.length()&&!isalpha(fname[i]);++i);
     if (islower(fname[i])) {
         transform(fname.begin()+caseoffset, fname.end(), fname.begin()+caseoffset, toupper);
     } else {
@@ -424,35 +418,26 @@ FILE* ret;
 #endif
 }
 
-/**
- * @param path Path to test
- * @return true if it's a Directory
- */
-bool isdir(const string& path) 
-{
-	
-#ifdef _MSC_VER
+bool isdir(const string& path) {
+#ifdef _WIN32
     DWORD length = GetCurrentDirectory(0, 0);
-    LPWSTR orig_path = new WCHAR[length];
+    char* orig_path = new char[length];
     GetCurrentDirectory(length, orig_path);
-    /*if (!SetCurrentDirectory(path.c_str())) {
-		if (orig_path != 0)
+    if (!SetCurrentDirectory(path.c_str())) {
+		if (orig_path != NULL)
 			delete[] orig_path;
-		orig_path = 0;
+		orig_path = NULL;
         return false;
-    }*/
+    }
     SetCurrentDirectory(orig_path);
 	if (orig_path != NULL)
 		delete[] orig_path;
-	orig_path = 0;
+	orig_path = NULL;
     return true;
-
 #elif defined (__MORPHOS__)
-    // TODO : need to chdir in directory
-    struct stat fileinfo;
+        struct stat fileinfo;
 	stat( path.c_str(), &fileinfo );
 	return S_ISDIR( fileinfo.st_mode );
-
 #else
     int curdirfd = open("./", O_RDONLY);
     if (-1 == curdirfd) {
@@ -461,9 +446,10 @@ bool isdir(const string& path)
     if (-1 == chdir(path.c_str())) {
         return false;
     }
-    return true;
-
+    fchdir(curdirfd);
+    close(curdirfd);
 #endif
+    return true;
 }
 
 } // namespace ExtPriv

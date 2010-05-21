@@ -1,5 +1,6 @@
 // DropDownListBox.cpp
-//
+// 1.0
+
 //    This file is part of OpenRedAlert.
 //
 //    OpenRedAlert is free software: you can redistribute it and/or modify
@@ -24,6 +25,7 @@
 #include "Font.h"
 #include "video/CPSImage.h"
 #include "video/SHPImage.h"
+#include "include/config.h"
 #include "video/GraphicsEngine.h"
 #include "video/ImageCache.h"
 #include "include/sdllayer.h"

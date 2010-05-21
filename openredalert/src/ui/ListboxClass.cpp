@@ -25,6 +25,7 @@
 
 #include "RA_Label.h"
 #include "Font.h"
+#include "include/config.h"
 #include "video/GraphicsEngine.h"
 #include "video/ImageCache.h"
 #include "include/sdllayer.h"

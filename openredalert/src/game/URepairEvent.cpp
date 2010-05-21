@@ -26,7 +26,6 @@
 #include "UnitAndStructurePool.h"
 #include "Unit.hpp"
 #include "ActionEventQueue.h"
-#include "UnitOrStructureType.h"
 
 namespace p {
 	extern UnitAndStructurePool* uspool;
@@ -74,9 +73,8 @@ void URepairEvent::stop()
 {
     if (un == 0)
     {
-        //printf("Repair unit::stop: un is NULL!?\n");
-        //abort();
-        return;
+        printf("Repair unit::stop: un is NULL!?\n");
+        abort();
     }
     stopping = true;
 }
@@ -97,15 +95,13 @@ void URepairEvent::run()
 
 	FixStr = p::uspool->getStructureAt(fix_str_pos);
 
-	if (FixStr == 0)
-	{
+	if ( FixStr == NULL ){
 		delete this;
 		return;
 	}
 
 	// Check the structure is actually fix
-	if (FixStr->getType()->getName() == "FIX") 
-	{
+	if (strcmp ((char*)FixStr->getType()->getTName(), "FIX") != 0 ){
 		delete this;
 		return;
 	}

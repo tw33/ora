@@ -1,5 +1,6 @@
 // BAttackAnimEvent.cpp
-//
+// 1.0
+
 //    This file is part of OpenRedAlert.
 //
 //    OpenRedAlert is free software: you can redistribute it and/or modify
@@ -30,12 +31,14 @@ class UnitOrStructure;
  * the run function rather than the anim_func function.
  *
  * @author Damien Carol (OpenRedAlert)
+ * @version 1.0
+ * @since r377
  */
 class BAttackAnimEvent : public BuildingAnimEvent
 {
 public:
     /** Constructor */
-    BAttackAnimEvent(unsigned int p, Structure* str);
+    BAttackAnimEvent(Uint32 p, Structure* str);
     ~BAttackAnimEvent();
 
     void run();
@@ -44,14 +47,13 @@ public:
     void update();
 
 private:
-    unsigned int frame;
+    uint8_t frame;
     Structure* strct;
     /** the unit or structure to be attacked */
     UnitOrStructure* target;
     bool done;
-    /** True if the building must charge this weapon before attack (like for tesla coil) */
     bool NeedToCharge;
-    unsigned int StartFrame;
+    Uint16 StartFrame;
 };
 
 #endif //BATTACKANIMEVENT_H

@@ -22,6 +22,8 @@
 
 #include "SDL/SDL_types.h"
 
+#include "UnitOrStructureType.h"
+
 //
 //  Commands that tell us what the unit or structure should be doing
 //
@@ -54,7 +56,6 @@ class WeaponsPool;
 class Unit;
 class Structure;
 class UnitAndStructurePool;
-class UnitOrStructureType;
 
 using std::string;
 
@@ -96,21 +97,18 @@ public:
 
 private:
     Uint16 health;
-    
-    /** Number of the player who is the owner of this unit */
-    unsigned int owner;
-    
 public:
     Uint16 getHealth() const;
 
     void setHealth(Uint16 health);
 
-    unsigned int getOwner() const;
+    virtual Uint8 getOwner() const = 0;
 
+    virtual void setOwner(Uint8) = 0;
 
-    virtual unsigned int getPos() const = 0;
+    virtual Uint16 getPos() const = 0;
 
-    virtual unsigned int getSubpos() const = 0;
+    virtual Uint16 getSubpos() const = 0;
 
     /** 
      * get the first blocked cell in structure.
@@ -161,8 +159,6 @@ public:
     virtual UnitOrStructure * getTarget() ;
 
     virtual string getTriggerName (void)  = 0;
-       
-    void setOwner(unsigned int newOwner);
 };
 
 #endif

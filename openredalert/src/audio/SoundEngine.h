@@ -27,15 +27,13 @@
 
 #include "SoundCache.h"
 
+class SoundBuffer;
 
 using std::vector;
 using std::string;
 
 namespace Sound
 {
-
-//class SoundBuffer;
-
 
 /**
  * Manager of all sounds in OpenRedAlert

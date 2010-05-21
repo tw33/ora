@@ -64,7 +64,7 @@ public:
 
 	void DrawButtonTooltip (Uint8 index);
     Uint8 getButton(Uint16 x, Uint16 y);
-    void ClickButton(Uint8 index, string& unitname, createmode_t* createmode);
+    void ClickButton(Uint8 index, char* unitname, createmode_t* createmode);
     void ResetButton();
     void ScrollSidebar(bool scrollup);
     void UpdateSidebar();
@@ -107,16 +107,14 @@ private:
 
     void SetupButtons(Uint16 height);
     void ScrollBuildList(Uint8 dir, Uint8 type);
-    void Build(Uint8 index, Uint8 type, string& unitname, createmode_t* createmode);
+    void Build(Uint8 index, Uint8 type, char* unitname, createmode_t* createmode);
     void UpdateIcons();
     void UpdateAvailableLists();
     void DownButton(Uint8 index);
     void AddButton(Uint16 x, Uint16 y, const char* fname, Uint8 f, Uint8 pal);
     void DrawButton(Uint8 index);
     void DrawClock(Uint8 index, Uint8 imgnum);
-    
-    /** Give the name of the button with the specified index */
-    string getButtonName(unsigned int index);
+    char* getButtonName(Uint8 index);
 	
     Uint32 radarlogo;
     SDL_Rect radarlocation;
@@ -158,8 +156,8 @@ private:
     Uint8 buildbut;
     vector<SidebarButton*> buttons;
 
-    vector<string> uniticons;
-    vector<string> structicons;
+    vector<char*> uniticons;
+    vector<char*> structicons;
 
     const char* radarname;
     RadarAnimEvent* radaranim;

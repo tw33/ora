@@ -22,7 +22,7 @@
 
 #include "SDL/SDL_types.h"
 
-#include "misc/config.h" 
+#include "include/config.h" 
 
 using std::string;
 
@@ -36,7 +36,7 @@ public:
 	~Game();
 
 	void InitializeMap(string MapName);
-	/** Initialize some object of the game */
+	/** Initialise some object of the game */
 	void InitializeGameClasses();
 	void FreeMemory();
 	void play();

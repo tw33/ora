@@ -18,7 +18,6 @@
 #ifndef STRUCTURETYPE_H
 #define STRUCTURETYPE_H
 
-#include <string>
 #include <vector>
 
 #include "SDL/SDL_types.h"
@@ -30,30 +29,31 @@
 #include "animinfo_t.h"
 
 class INIFile;
-//class UnitType;
+class UnitType;
 class Weapon;
 
-using std::string;
 using std::vector;
 
 /**
  * Base class for structure in game
  */
-class StructureType : public UnitOrStructureType
-{
+class StructureType : public UnitOrStructureType {
 public:
-    /** Constructor */
-    StructureType(const string& typeName, INIFile* structini, INIFile* artini,
-                  const string& thext);
-    ~StructureType();
+	StructureType(const char * typeName, INIFile* structini, INIFile * artini,
+			const char * thext);
+	~StructureType();
 
 	Uint16 * getSHPNums();
 
 	Uint16 * getSHPTNum();
 
-	vector<string> getDeployWith() const;
+	const char * getTName() const;
 
-	vector<string> getOwners() const;
+	const char * getName() const;
+
+	vector < char *> getDeployWith() const;
+
+	vector < char *> getOwners() const;
 
 	Uint8 getNumLayers() const;
 
@@ -93,6 +93,15 @@ public:
 
 	bool isPowered();
 
+	/**
+     * Units and structures can have at most two weapons. Currently any secondary weapons are ignored.
+     * @param primary if true return the first weapon else the second
+     * @todo Write a version that accepts an armour type and returns the weapon that'll cause the most damage.
+     */
+	Weapon* getWeapon(bool primary) const;
+	/** @brief Return by default the primary weapon */
+	Weapon* getWeapon() const;
+
 	bool hasTurret() const;
 
 	Uint16 getBlckOff() const;
@@ -116,8 +125,6 @@ public:
 	Uint32 getAdjacent() const;
 
 private:
-    StructureType(const StructureType& orig);
-
 	/** Index in the ImagePool of the first MAKE image */
 	Uint16 makeimg;
 	Uint16 blckoff;
@@ -131,9 +138,10 @@ private:
 	Uint8 defaultface;
 	Uint8 buildlevel;
 	Uint8 * blocked;
-
-	vector<string> owners;
-	vector<string> deploywith;
+	char tname[12];
+	char* name;
+	vector<char*> owners;
+	vector<char*> deploywith;
 	PowerInfo powerinfo;
 
 	bool is_wall;
@@ -149,4 +157,4 @@ private:
 	Uint32 adjacent;
 };
 
-#endif
+#endif //STRUCTURETYPE_H

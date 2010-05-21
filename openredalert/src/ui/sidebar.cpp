@@ -17,6 +17,9 @@
 
 #include "Sidebar.h"
 
+#ifdef _MSC_VER
+#include <functional>
+#endif
 #include <cstdlib>
 #include <stdexcept>
 #include <string>
@@ -39,7 +42,7 @@
 #include "video/ImageCacheEntry.h"
 #include "audio/SoundEngine.h"
 #include "video/GraphicsEngine.h"
-#include "misc/common.h"
+#include "include/common.h"
 #include "include/sdllayer.h"
 #include "sidebarop.h"
 #include "video/ImageNotFound.h"
@@ -49,8 +52,6 @@
 #include "game/UnitAndStructurePool.h"
 #include "misc/StringTableFile.h"
 #include "vfs/vfs.h"
-#include "game/UnitType.h"
-#include "game/StructureType.h"
 
 /// @todo Move this into config file(s)
 static const char* radarnames[] =
@@ -68,15 +69,13 @@ using std::string;
 using std::runtime_error;
 using std::vector;
 using std::replace;
-using std::stringstream;
-
-using Sound::SoundEngine;
+using std::ostringstream;
 
 extern Logger * logger;
 namespace pc {
 	//extern ConfigType Config;
 	extern ImageCache* imgcache;
-	extern SoundEngine* sfxeng;
+	extern Sound::SoundEngine* sfxeng;
 	extern GraphicsEngine* gfxeng;
 	extern Cursor* cursor;
 }
@@ -273,11 +272,20 @@ Sidebar::Sidebar(Player *pl, Uint16 height, const char *theatre)
  */
 Sidebar::~Sidebar()
 {
-	// Free sidebar surface
+    Uint32 i;
+
     SDL_FreeSurface(sbar);
- 
-	// Free clock images
-	for (unsigned int i = 0; i < 256; i++){
+
+
+    for (i=0; i < uniticons.size(); ++i) {
+        delete[] uniticons[i];
+    }
+
+    for (i=0; i < structicons.size(); ++i) {
+        delete[] structicons[i];
+    }
+
+	for (int i = 0; i < 256; i++){
 		if (Clocks[i] != NULL){
 			SDL_FreeSurface(Clocks[i]);
 		}
@@ -290,10 +298,8 @@ Sidebar::~Sidebar()
 /**
  * @returns whether the sidebar's visibility has changed.
  */
-bool Sidebar::getVisChanged()
-{
-    if (vischanged)
-    {
+bool Sidebar::getVisChanged() {
+    if (vischanged) {
         vischanged = false;
         return true;
     }
@@ -427,18 +433,19 @@ SDL_Surface *Sidebar::getSidebarImage(SDL_Rect location)
     return sbar;
 }
 
-string Sidebar::getButtonName(unsigned int index)
+char* Sidebar::getButtonName(Uint8 index)
 {
+	Uint8 function;
 	Uint8* offptr;
-	vector<string>* vecptr;
+	vector<char*>* vecptr;
 	Uint8 type;
-	
+	char* res = 0;
+
 	// Get the fonction of the button
-	unsigned int function = buttons[index]->getFunction();
+	function = buttons[index]->getFunction();
 
 	// Check that this is a build button and not a scroll button
-	if ((function&0x3) != 1)
-	{
+	if ((function&0x3) != 1){
 		return 0;
 	}
 
@@ -446,66 +453,60 @@ string Sidebar::getButtonName(unsigned int index)
 
 	type = (function&sbo_unit);
 
-	if (type) 
-	{
+	if (type) {
 		offptr = &unitoff;
 		vecptr = &uniticons;
-	} 
-	else 
-	{
+	} else {
 		offptr = &structoff;
 		vecptr = &structicons;
 	}
 
-	if ((unsigned)(*vecptr).size() > ((unsigned)(*offptr)+VecPtrIndex - 1) )
+	if ( (unsigned)(*vecptr).size() > ((unsigned)(*offptr)+VecPtrIndex - 1) )
 	{
-		return (*vecptr)[(*offptr+VecPtrIndex-1)];
-	} 
-	else 
-	{
+		res = cppstrdup((*vecptr)[(*offptr+VecPtrIndex-1)]);
+	} else {
 		// Out of range
-		return "";
+		return 0;
 	}
+
+	return res;
 }
 
-/**
- * @param index Index of the button ???
- */
 void Sidebar::DrawButtonTooltip(Uint8 index)
 {
+	char* UnitOrStructureName = 0;	//
+	Uint8 			unit;
+	Uint8 			function;
+	ostringstream	TipString;
+
+
 	// Get the function of this button
-	unsigned int function = buttons[index]->getFunction();
+	function = buttons[index]->getFunction();
 
 	// Get the button name with this index
-	string UnitOrStructureName = getButtonName(index);
+	UnitOrStructureName = getButtonName(index);
 
 	// Check that it's ok
-	if (UnitOrStructureName.size() == 0)
-	{
+	if (UnitOrStructureName == 0){
 		return;
 	}
-	unsigned int unit = ( function & sbo_unit );
+	unit = ( function & sbo_unit );
 
-        string shortName = UnitOrStructureName.substr(0, 4);
-                
-        UnitOrStructureType* type = 0;
+	UnitOrStructureType* type = 0;
 	if (unit) {
-		type = p::uspool->getUnitTypeByName(shortName);
+		type = p::uspool->getUnitTypeByName(UnitOrStructureName);
 	} else {
-		type = p::uspool->getStructureTypeByName(shortName);
+		type = p::uspool->getStructureTypeByName(UnitOrStructureName);
 	}
 
-	// If no type found do nothing
-	if (type == 0)
-	{
+	if (type == 0){
 		return;
 	}
-        
-    stringstream TipString;
-    // Get raw name of the type
-    string nameOfType = type->getName();
-    if (nameOfType.size() > 0)
-    {
+	TipString.str("");
+	if (type->getName() != 0)
+	{
+		// Get raw name of the type
+		string nameOfType = string(type->getTName());
 		if (nameOfType=="POWR"){
 			TipString << stringFile->getString(126);
 		} else if (nameOfType=="BRIK"){
@@ -533,7 +534,7 @@ void Sidebar::DrawButtonTooltip(Uint8 index)
 		} else if (nameOfType=="IRON"){
 			TipString << stringFile->getString(424);
 		} else {
-			//TipString << type->getName();
+			TipString << type->getName();
 		}
 	}
 	else
@@ -573,13 +574,14 @@ Uint8 Sidebar::getButton(Uint16 x, Uint16 y)
  *
  * @bug This is an evil hack that should be replaced by something more flexible.
  */
-void Sidebar::ClickButton(Uint8 index, string& unitname, createmode_t* createmode)
+void Sidebar::ClickButton(Uint8 index, char* unitname, createmode_t* createmode)
 {
-    unsigned int f = buttons[index]->getFunction();
+    Uint8 f;
+
+    f = buttons[index]->getFunction();
     *createmode = CM_INVALID;
 
-    switch (f&0x3) 
-    {
+    switch (f&0x3) {
     case 0:
         return;
         break;
@@ -943,6 +945,7 @@ SDL_Surface* Sidebar::ReadShpImage(char *Name, int ImageNumb)
 
 void Sidebar::SetupButtons(Uint16 height)
 {
+	const char* tmpname;
 	Uint16 scrollbase;
 	Uint8 t;
 	int ButtonXpos;
@@ -959,7 +962,7 @@ void Sidebar::SetupButtons(Uint16 height)
 
 	SHPImage* strip = 0; // Image behind button when no option is allowed
 
-	const char* tmpname = VFSUtils::VFS_getFirstExisting(3, "stripna.shp", "hstrip.shp", "strip.shp");
+	tmpname = VFSUtils::VFS_getFirstExisting(3,"stripna.shp","hstrip.shp","strip.shp");
 	if (tmpname == 0) {
 		logger->error("Unable to find strip images for sidebar, exiting\n");
 		throw SidebarError("Unable to find strip images for sidebar, exiting");
@@ -1005,22 +1008,21 @@ void Sidebar::SetupButtons(Uint16 height)
     // The order in which the AddButton calls are made MUST be preserved
     // Two loops are made so that all unit buttons and all structure buttons
     // are grouped contiguously (4,5,6,7,...) compared to (4,6,8,10,...)
-    for (t=0;t<buildbut;++t) 
-    {
+    for (t=0;t<buildbut;++t) {
         //if (pc::Config.gamenum == GAME_RA){
 		if ((player->getSide()&~PS_MULTI) == PS_BAD)
-			AddButton(ButtonXpos+geom.bw,startoffs+geom.bh*t,"stripus.shp", sbo_build|sbo_unit, 0);
+			AddButton(ButtonXpos+geom.bw,startoffs+geom.bh*t,"stripus.shp", sbo_build|sbo_unit,0);
 		else
-			AddButton(ButtonXpos+geom.bw,startoffs+geom.bh*t,"stripna.shp", sbo_build|sbo_unit, 0);
+			AddButton(ButtonXpos+geom.bw,startoffs+geom.bh*t,"stripna.shp",sbo_build|sbo_unit,0);
         //}else
 		//AddButton(ButtonXpos+geom.bw,startoffs+geom.bh*t,"strip.shp",sbo_build|sbo_unit,0);
     }
     for (t=0;t<buildbut;++t) {
         //if (pc::Config.gamenum == GAME_RA){
 		if ((player->getSide()&~PS_MULTI) == PS_BAD)
-			AddButton(ButtonXpos,startoffs+geom.bh*t,"stripus.shp", sbo_build|sbo_structure, spalnum);
+			AddButton(ButtonXpos,startoffs+geom.bh*t,"stripus.shp",sbo_build|sbo_structure,spalnum);
 		else
-			AddButton(ButtonXpos,startoffs+geom.bh*t,"stripna.shp", sbo_build|sbo_structure, spalnum);
+			AddButton(ButtonXpos,startoffs+geom.bh*t,"stripna.shp",sbo_build|sbo_structure,spalnum);
         //  }else
 		//AddButton(ButtonXpos,startoffs+geom.bh*t,"strip.shp",sbo_build|sbo_structure,spalnum);
     }
@@ -1034,8 +1036,7 @@ void Sidebar::SetupButtons(Uint16 height)
     UpdateIcons();
 
     // Hide the sidebars if they are no object
-    if (uniticons.empty() && structicons.empty())
-    {
+    if (uniticons.empty() && structicons.empty()) {
         visible = false;
         vischanged = true;
     }
@@ -1050,7 +1051,7 @@ void Sidebar::SetupButtons(Uint16 height)
 void Sidebar::ScrollBuildList(Uint8 dir, Uint8 type)
 {
     Uint8* offptr;
-    vector<string>* vecptr;
+    vector<char*>* vecptr;
 
     if (type) {
         offptr = &unitoff;
@@ -1075,10 +1076,10 @@ void Sidebar::ScrollBuildList(Uint8 dir, Uint8 type)
     UpdateIcons();
 }
 
-void Sidebar::Build(Uint8 index, Uint8 type, string& unitname, createmode_t* createmode)
+void Sidebar::Build(Uint8 index, Uint8 type, char* unitname, createmode_t* createmode)
 {
     Uint8* offptr;
-    vector<string>* vecptr;
+    vector<char*>* vecptr;
 
     if (type) {
         offptr = &unitoff;
@@ -1089,12 +1090,10 @@ void Sidebar::Build(Uint8 index, Uint8 type, string& unitname, createmode_t* cre
         *createmode = CM_STRUCT;
     }
 
-    if ( (unsigned)(*vecptr).size() > ((unsigned)(*offptr)+index - 1) ) 
-    {
-        unitname = (*vecptr)[(*offptr+index-1)].substr(0, 13);
-    } 
-    else 
-    {
+    if ( (unsigned)(*vecptr).size() > ((unsigned)(*offptr)+index - 1) ) {
+        strncpy(unitname,(*vecptr)[(*offptr+index-1)],13);
+        unitname[strlen((*vecptr)[(*offptr+index-1)])-8] = 0x0;
+    } else {
         // Out of range
         return;
     }
@@ -1167,10 +1166,12 @@ void Sidebar::UpdateIcons()
  */
 void Sidebar::UpdateAvailableLists()
 {
-	vector<string> units_avail; // list of units available (temp)
-	vector<string> structs_avail; // list of structures available (temp)
-	vector<string> superWeapons_avail; // list of superWeapons available (temp)
-	
+	vector<const char*> units_avail; // list of units available (temp)
+	vector<const char*> structs_avail; // list of structures available (temp)
+	vector<const char*> superWeapons_avail; // list of superWeapons available (temp)
+	char* nametemp;
+	Uint32 i;
+
     // Get UNITS availlable (like "3tnk","typ2" ... etc)
     units_avail = p::uspool->getBuildableUnits(player);
 
@@ -1186,8 +1187,7 @@ void Sidebar::UpdateAvailableLists()
     //
     // if their are less options available then offset = 0
     // LIKE IN ORIGINAL GAME !!!
-    if ((units_avail.size() + superWeapons_avail.size()) < uniticons.size()) 
-    {
+    if (  (units_avail.size() + superWeapons_avail.size()) < uniticons.size() ) {
     	// OFFSET = 0
     	unitoff = 0;
     }
@@ -1211,41 +1211,52 @@ void Sidebar::UpdateAvailableLists()
     //
     // Free list of availlable icons
     // Delete all icons in the second list (unit)
-    uniticons.clear();
-    
+    for (i=0; i<uniticons.size(); ++i) {
+    	delete[] uniticons[i];
+    }
+    // resize the vector
+    uniticons.resize(0);
+
     // Free list of availlable icons
     // Delete all icons in the first list (structure)
-    structicons.clear();
+    for (i=0;i<structicons.size();++i) {
+    	delete[] structicons[i];
+    }
+    // resize the vector
+    structicons.resize(0);
 
 
     //
     // ADD UNITS at icons
     //
     // Add icons
-    for (unsigned int i=0;i<units_avail.size();++i)
-    {
-        string nametemp = units_avail[i] + "ICON.SHP";
-        uniticons.push_back(nametemp.c_str());
+    for (i=0;i<units_avail.size();++i) {
+        nametemp = new char[13];
+        memset(nametemp,0x0,13);
+        sprintf(nametemp,"%sICON.SHP",units_avail[i]);
+        uniticons.push_back(nametemp);
     }
 
     //
     // ADD STRUCTURES at icons
     //
     // Add icons
-    for (unsigned int i=0;i<structs_avail.size();++i)
-    {
-    	string nametemp = structs_avail[i] + "ICON.SHP";
-    	structicons.push_back(nametemp.c_str());
+    for (i=0;i<structs_avail.size();++i) {
+    	nametemp = new char[13];
+    	memset(nametemp,0x0,13);
+    	sprintf(nametemp, "%sICON.SHP", structs_avail[i]);
+    	structicons.push_back(nametemp);
     }
 
     //
     // ADD SUPERWEAPONS at icons
     //
     // Add icon
-    for (unsigned int i=0; i<superWeapons_avail.size(); ++i)
-    {
-    	string nametemp = superWeapons_avail[i] + "ICON.SHP";
-    	uniticons.push_back(nametemp.c_str());
+    for (i=0; i<superWeapons_avail.size(); ++i) {
+    	nametemp = new char[13];
+    	memset(nametemp,0x0,13);
+    	sprintf(nametemp,"%sICON.SHP", superWeapons_avail[i]);
+    	uniticons.push_back(nametemp);
     }
 
 
@@ -1260,8 +1271,6 @@ void Sidebar::UpdateAvailableLists()
     vischanged = true;
 }
 
-/**
- */
 void Sidebar::DownButton(Uint8 index)
 {
     if (index>3){
@@ -1334,7 +1343,7 @@ void Sidebar::DrawButton(Uint8 index)
 			? unitoff  // Unit buttons are created first
 			: (structoff-buildbut) // See comment around line 265
 			);
-	vector<string>& icons = ((func&sbo_unit)
+	vector<char*>& icons = ((func&sbo_unit)
 				?(uniticons)
 				:(structicons));
 
@@ -1343,13 +1352,9 @@ void Sidebar::DrawButton(Uint8 index)
 	}
 
     // Extract type name from icon name, e.g. NUKE from NUKEICON.SHP
-    int length = icons[offset].size()-8;
-    if (length>13) 
-    {
-    	length = 13;
-    }
-    
-    string name = icons[offset].substr(length);
+    Uint32 length = strlen(icons[offset])-8;
+    if (length>13) length = 13;
+    string name(icons[offset], length);
 
     static const char* stat_mesg[] = {
         "???",		// BQ_INVALID
@@ -1382,8 +1387,7 @@ void Sidebar::DrawButton(Uint8 index)
     }
 
     // @todo REFACTOR THIS
-    if (0 == type)
-    {
+    if (0 == type) {
 //        getFont()->drawText(stat_mesg[status], sbar, dest.x + stat_pos[status].x, dest.y + stat_pos[status].y);
    		//StatusLabel.Draw(stat_mesg[status], sbar, dest.x + stat_pos[status].x, dest.y + stat_pos[status].y);
         // Grey out invalid items for prettyness
@@ -1413,10 +1417,10 @@ void Sidebar::DrawButton(Uint8 index)
     }
     /// @todo This doesn't work when you immediately pause after starting to
     // build (but never draws the clock for things not being built).
-    if (progress > 0) 
-    {
+    if (progress > 0) {
 		StatusLabel.Draw(stat_mesg[status], sbar, dest.x + stat_pos[status].x, dest.y + stat_pos[status].y - 10);
     }
+
 }
 
 SDL_Surface* Sidebar::getTabImage()

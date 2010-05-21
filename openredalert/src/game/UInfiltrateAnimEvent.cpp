@@ -29,14 +29,12 @@
 #include "Projectile.h"
 #include "Weapon.h"
 #include "PlayerPool.h"
-#include "game/Unit.hpp"
 #include "CnCMap.h"
 #include "include/Logger.h"
 #include "Unit.hpp"
-#include "UnitOrStructureType.h"
 
 namespace p {
-	extern CnCMap* ccmap;
+	extern PlayerPool* ppool;
 	extern ActionEventQueue * aequeue;
 	extern CnCMap * ccmap;
 }
@@ -250,7 +248,7 @@ void UInfiltrateAnimEvent::run()
 	// Throw an event
     // @todo FINISH THIS
 	HandleTriggers(target, TRIGGER_EVENT_ENTERED_BY,
-	    		p::ccmap->getPlayerPool()->getHouseNumByPlayerNum(un->getOwner()));
+	    		p::ppool->getHouseNumByPlayerNum(un->getOwner()));
 
 	if (target->getType()->isStructure()){
 		((Structure*)target)->bomb();

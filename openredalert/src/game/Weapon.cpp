@@ -18,8 +18,10 @@
 #include "Weapon.h"
 
 #include <algorithm>
+#include <cctype>
 #include <vector>
 
+#include "include/common.h"
 #include "Projectile.h"
 #include "UnitOrStructure.h"
 #include "Warhead.h"
@@ -36,6 +38,8 @@
 #include "ProjectileAnim.h"
 #include "RedAlertDataLoader.h"
 
+#include "include/common.h"
+
 using std::vector;
 using std::for_each;
 
@@ -47,13 +51,17 @@ namespace p
 }
 namespace pc
 {
-	extern Sound::SoundEngine * sfxeng;
+	extern Sound::SoundEngine* sfxeng;
 	extern std::vector<SHPImage *> * imagepool;
 }
 extern Logger * logger;
 
 Weapon::Weapon(const char* wname)
 {
+	char *pname= 0;
+	char *whname= 0;
+	//char *faname= 0;
+	//char *faimage= 0;
 	map<string, Projectile*>::iterator projentry;
 	map<string, Warhead*>::iterator wheadentry;
 	INIFile * weapini;
@@ -62,7 +70,8 @@ Weapon::Weapon(const char* wname)
 	//Uint8 i;
 	string projname, warheadname;
 	string weapname;
-
+	//string::iterator p;
+	
 	INIFile* rules = 0;
 
 	name = string(wname);
@@ -72,12 +81,14 @@ Weapon::Weapon(const char* wname)
 	weapini = p::weappool->getWeaponsINI();
 	weapname = (string)wname;
 
-	// UPPER the string 'weapname'
-	for_each(weapname.begin(), weapname.end(), toupper);
+	// UPPER the strin 'weapname'
+	//p = weapname.begin();while (p!=weapname.end())	{*p++ = toupper(*p);}	//no good in VC
+	strUpper(weapname);	//for (int i = 0; i < weapname.size(); i++)	{		weapname[i]= toupper(weapname[i]);	}
+	
 
 
-    string pname = weapini->readString(wname, "projectile", "");
-	if (pname.size() == 0)
+	pname = weapini->readString(wname, "projectile");
+	if (pname == NULL)
 	{
 		logger->warning(
 				"Unable to find projectile for weapon \"%s\" in inifile..\n",
@@ -86,8 +97,8 @@ Weapon::Weapon(const char* wname)
 	}
 	projname = (string)pname;
 
-	// UPPER the string 'projname'
-	for_each(projname.begin(), projname.end(), toupper);
+	// UPPER the strin 'projname'
+	strUpper(weapname);
 
 
 	projentry = p::weappool->projectilepool.find(projname);
@@ -101,7 +112,8 @@ Weapon::Weapon(const char* wname)
 		}
 		catch(...)
 		{
-			logger->warning("Unable to find projectile \"%s\" used for weapon \"%s\".\nUnit using this weapon will be unarmed\n", pname.c_str(), wname);
+			logger->warning("Unable to find projectile \"%s\" used for weapon \"%s\".\nUnit using this weapon will be unarmed\n", pname, wname);
+			delete[] pname;
 			throw 0;
 		}
 		p::weappool->projectilepool[projname] = projectile;
@@ -110,20 +122,17 @@ Weapon::Weapon(const char* wname)
 	{
 		projectile = projentry->second;
 	}
+	delete[] pname;
 
-        
-        
-        
-        
-	string whname = weapini->readString(wname, "warhead");
-	if (whname.size() == 0)
+	whname = weapini->readString(wname, "warhead");
+	if (whname==NULL)
 	{
 		logger->warning(
 				"Unable to find warhead for weapon \"%s\" in inifile..\n",
 				wname);
 		throw 0;
 	}
-	warheadname = whname;
+	warheadname = (string)whname;
 
 	transform(warheadname.begin(), warheadname.end(), warheadname.begin(),
 			toupper);
@@ -137,7 +146,8 @@ Weapon::Weapon(const char* wname)
 		}
 		catch(...)
 		{
-			logger->warning("Unable to find Warhead \"%s\" used for weapon \"%s\".\nUnit using this weapon will be unarmed\n", whname.c_str(), wname);
+			logger->warning("Unable to find Warhead \"%s\" used for weapon \"%s\".\nUnit using this weapon will be unarmed\n", whname, wname);
+			delete[] whname;
 			throw 0;
 		}
 		p::weappool->warheadpool[warheadname] = whead;
@@ -146,6 +156,7 @@ Weapon::Weapon(const char* wname)
 	{
 		whead = wheadentry->second;
 	}
+	delete[] whname;
 
 	speed = weapini->readInt(wname, "speed", 100);
 	range = weapini->readInt(wname, "range", 4);
@@ -158,22 +169,21 @@ Weapon::Weapon(const char* wname)
 	// pc::imagepool->push_back(new SHPImage("minigun.shp", mapscaleq));
 	//firesound = weapini->readString(wname, "firesound");
 	//printf("wname = %s\n", wname);
-	report = rules->readString(wname, "Report", "");
-	if (report.size() > 0)
-        {
+	report = rules->readString(wname, "Report");
+	if (report != 0){
 		string soundWeap = report;
 		soundWeap += string(".aud");
 		transform(soundWeap.begin(), soundWeap.begin(), soundWeap.end(), tolower);
 		//logger->debug("Report = %s\n", soundWeap.c_str());
-		report = soundWeap;
+		report = cppstrdup(soundWeap.c_str());
 		pc::sfxeng->LoadSound(report);
 	}
-	reloadsound = weapini->readString(wname, "reloadsound", "");
-	if (reloadsound.size() > 0)
+	reloadsound = weapini->readString(wname, "reloadsound");
+	if (reloadsound != 0)
 		pc::sfxeng->LoadSound(reloadsound);
 
-	chargingsound = weapini->readString(wname, "chargingsound", "");
-	if (chargingsound.size() > 0)
+	chargingsound = weapini->readString(wname, "chargingsound");
+	if (chargingsound != 0)
 		pc::sfxeng->LoadSound(chargingsound);
 
 	fuel = weapini->readInt(wname, "fuel", 0);
@@ -261,11 +271,24 @@ Weapon::Weapon(const char* wname)
 
 Weapon::~Weapon()
 {
-    // @todo Implemente Anim in [Weapon]
-    //if (fireimage != 0)
-    //{
-    //	delete[] fireimages;
-    //}
+	// If Report sound exist
+	if (report != 0)
+	{
+		// delete it
+		delete[] report;
+	}
+
+	// If Reload sound exist
+	if (reloadsound != 0)
+	{
+		delete[] reloadsound;
+	}
+
+	// @todo Implemente Anim in [Weapon]
+	//if (fireimage != 0)
+	//{
+	//	delete[] fireimages;
+	//}
 }
 
 Uint8 Weapon::getReloadTime() const
@@ -303,19 +326,19 @@ Warhead * Weapon::getWarhead()
 	return whead;
 }
 
-const string Weapon::getChargingSound()const
-{ 
+char * Weapon::getChargingSound()
+{
 	return chargingsound;
 }
 
 void Weapon::fire(UnitOrStructure* owner, Uint16 target, Uint8 subtarget)
 {
-    // If sound report is defined
-    if (report.size() > 0)
-    {
-        // Play the sound
-        pc::sfxeng->PlaySound(report);
-    }
+	// If sound report is defined
+	if (report != 0)
+	{
+		// Play the sound
+		pc::sfxeng->PlaySound(report);
+	}
 
 	// @todo implemente Anim in [Weapon]
 	/*if (fireimage != 0)
@@ -384,8 +407,8 @@ const char * Weapon::getName() const
 
 void Weapon::Reload()
 {
-    if (reloadsound.size() > 0)
-    {
-        pc::sfxeng->PlaySound(reloadsound);
-    }
+	if (reloadsound != 0)
+	{
+		pc::sfxeng->PlaySound(reloadsound);
+	}
 }

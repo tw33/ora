@@ -20,9 +20,8 @@
 #include <cstdio>
 #include <cctype>
 
-#include "audio/SoundEngine.h"
 #include "game/Ai.h"
-#include "misc/common.h"
+#include "include/common.h"
 #include "misc/INIFile.h"
 #include "video/Renderer.h"
 #include "game/ActionEventQueue.h"
@@ -31,12 +30,11 @@
 #include "game/RedAlertDataLoader.h"
 #include "include/Logger.h"
 #include "game/Dispatcher.h"
+#include "audio/SoundEngine.h"
 
-using std::cout; 
-using std::map; 
+using std::cout;
+using std::map;
 using std::string;
-
-using Sound::SoundEngine;
 
 typedef struct TiniFile
 {
@@ -57,6 +55,8 @@ namespace p {
 	CnCMap			*ccmap = 0;
 	/** Unit and structure pool in gmae */
 	UnitAndStructurePool	*uspool = 0;
+	/** Pool of players */
+	PlayerPool*		ppool = 0;
 	/** Pool of weapon data */
 	WeaponsPool*	weappool = 0;
 	/** Dispatcher of the game */
@@ -67,13 +67,13 @@ namespace p {
 	RedAlertDataLoader * raLoader;
 }
 
-/** 
+/**
  * Check if a inifile was already loaded in the p::Setting list
- * 
+ *
  * if not this function loads it in the list
  * We pass by value because we could copy anyway
  */
-INIFile* GetConfig(string name) 
+INIFile* GetConfig(string name)
 {
 	TiniFile TempIniFile;
 
@@ -94,26 +94,61 @@ INIFile* GetConfig(string name)
 	return TempIniFile.inifile;
 }
 
-/**
- */
 void CleanConfig()
 {
-	
-	for (Uint32 i = 0; i < p::Setting.size(); i++)
-	{
+
+	for (Uint32 i = 0; i < p::Setting.size(); i++){
 		delete p::Setting[i].inifile;
 	}
 	p::Setting.clear();
 }
 
+#ifdef _MSC_VER
+int round(double a)
+{
+	return (a + 0.5);
+}
+#endif
 
-/** 
+void strUpper(std::string& stringToUpper)
+{
+	for (unsigned int i = 0; i < stringToUpper.size(); i++)
+	{
+		stringToUpper[i]= toupper(stringToUpper[i]);
+	}
+	//or could use something like "transform(warheadname.begin(), warheadname.end(), warheadname.begin(),			toupper);?"
+}
+
+void strUpper(char* stringToUpper)
+{
+	for (unsigned int i = 0; stringToUpper[i] != '\0'; i++)
+	{
+		stringToUpper[i] = toupper(stringToUpper[i]);
+	}
+}
+
+void strStripWhiteSpace(char* key)
+{
+	char* tmp = key+strlen(key)-1;
+	while ((*tmp) == ' ' || (*tmp) == '\t')
+	{
+		(*tmp) = '\0';
+		if (tmp == key)
+		{
+			return;
+		}
+		tmp--;
+	}
+}
+
+
+/**
  * Client only
  */
 namespace pc {
 	Renderer		*renderer;
 	/** SoundEngine of the game */
-	SoundEngine		*sfxeng = 0;
+	Sound::SoundEngine		*sfxeng = 0;
 	GraphicsEngine	*gfxeng = 0;
 	MessagePool		*msg = 0;
 	vector<SHPImage *>	*imagepool = 0;
@@ -124,7 +159,7 @@ namespace pc {
 	//MissionMapsClass	*MissionsMapdata = 0;
 	bool 			quit = false;
 	ConfigType		Config;
-	Ai				*ai;	
+	Ai				*ai;
 }
 
 // Server only
@@ -134,15 +169,13 @@ namespace ps {
 extern Logger* logger;
 
 // Server only
-std::vector<char*> splitList(const string& line, char delim)
+std::vector<char*> splitList(char* line, char delim)
 {
     vector<char*> retval;
     char* tmp;
     Uint32 i,i2;
     tmp = NULL;
-    
-    if (line.size() > 0) 
-    {
+    if (line != NULL) {
         tmp = new char[16];
         memset(tmp,0,16);
         for (i=0,i2=0;line[i]!=0x0;++i) {
@@ -203,21 +236,4 @@ const string& determineBinaryLocation(const string& launchcmd) {
 
 const string& getBinaryLocation() {
     return binloc;
-}
-
-/**
- */
-int Split(vector<string>& vecteur, string chaine, char separateur)
-{
-	vecteur.clear();
-	string::size_type stTemp = chaine.find(separateur); 
-	while(stTemp != string::npos)
-	{
-		vecteur.push_back(chaine.substr(0, stTemp));
-		chaine = chaine.substr(stTemp + 1);
-		stTemp = chaine.find(separateur);
-	}
-	
-	vecteur.push_back(chaine);
-	return vecteur.size();
 }

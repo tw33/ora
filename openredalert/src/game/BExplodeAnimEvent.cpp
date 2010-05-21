@@ -20,12 +20,11 @@
 #include <cmath>
 
 #include "CnCMap.h"
-#include "misc/config.h"
+#include "include/config.h"
 #include "audio/SoundEngine.h"
 #include "UnitAndStructurePool.h"
 #include "anim_nfo.h"
 #include "Structure.h"
-#include "StructureType.h"
 
 namespace pc
 {

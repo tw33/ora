@@ -1,0 +1,13 @@
+Download RedAlert1_SovietDisc.rar and RedAlert1_AlliedDisc.rar
+from http://www.commandandconquer.com/classic
+
+
+Put the following files in this directory
+
+RedAlert1_AlliedDisc/RedAlert1_AlliedDisc/CD1_ALLIED_DISC.ISO:
+INSTALL/REDALERT.MIX as REDALERT.MIX
+MAIN.MIX as MAIN.MIX
+
+RedAlert1_SovietDisc/RedAlert1_SovietDisc/CD2_SOVIET_DISC.ISO:
+MAIN.MIX as RUSSIAN.MIX
+

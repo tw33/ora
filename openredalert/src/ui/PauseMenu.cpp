@@ -26,29 +26,23 @@
 #include "TCheckBox.h"
 #include "game/Player.h"
 #include "game/PlayerPool.h"
-#include "misc/config.h"
+#include "include/config.h"
 #include "video/GraphicsEngine.h"
 #include "include/Logger.h"
 #include "audio/SoundEngine.h"
 #include "include/sdllayer.h"
 #include "video/Dune2Image.h"
 #include "misc/StringTableFile.h"
-#include "game/CnCMap.h"
 
-#ifndef VERSION
-#define VERSION "6xx"
-#endif
-
-using Sound::SoundEngine;
+#define VERSION "439"
 
 namespace p {
-	extern CnCMap* ccmap;
+	extern PlayerPool* ppool;
 }
 namespace pc {
 	extern ConfigType Config;
     extern GraphicsEngine * gfxeng;
-    extern SoundEngine* sfxeng;
-
+    extern Sound::SoundEngine* sfxeng;
 }
 extern Logger * logger;
 
@@ -140,10 +134,9 @@ PauseMenu::~PauseMenu()
 	// Free the windows
 	delete PauseWindow;
 
-    // Free the cursor surface
-    if (my_cursor != 0)
-    {
-        SDL_FreeSurface(my_cursor);
+	// Free the cursor surface
+	if (my_cursor != NULL){
+		SDL_FreeSurface(my_cursor);
     }
 }
 
@@ -162,8 +155,8 @@ int PauseMenu::HandleMenu()
 	pc::sfxeng->PauseLoopedSound(-1);
 
 	// Pause the build queue
-	for (int i = 0; i < p::ccmap->getPlayerPool()->getNumPlayers(); i++){
-		p::ccmap->getPlayerPool()->getPlayer(i)->pauseBuilding();
+	for (int i = 0; i < p::ppool->getNumPlayers(); i++){
+		p::ppool->getPlayer(i)->pauseBuilding();
     }
 
 	// Get the mouse coordinates
@@ -231,15 +224,15 @@ void PauseMenu::HandleInput()
 						pc::sfxeng->StopLoopedSound(-1);
 						//pc::sfxeng->ResumeLoopedSound(-1);
 
-						for (int i = 0; i < p::ccmap->getPlayerPool()->getNumPlayers(); i++)
-							p::ccmap->getPlayerPool()->getPlayer(i)->resumeBuilding();
+						for (int i = 0; i < p::ppool->getNumPlayers(); i++)
+							p::ppool->getPlayer(i)->resumeBuilding();
 					}
 					if (ContinueButton->MouseOver()){
 						// Continue the game
 						pc::Config.pause = false;
 						pc::sfxeng->ResumeLoopedSound(-1);
-						for (int i = 0; i < p::ccmap->getPlayerPool()->getNumPlayers(); i++){
-							p::ccmap->getPlayerPool()->getPlayer(i)->resumeBuilding();
+						for (int i = 0; i < p::ppool->getNumPlayers(); i++){
+							p::ppool->getPlayer(i)->resumeBuilding();
 						}
 					}
 				}
@@ -250,8 +243,8 @@ void PauseMenu::HandleInput()
 					// Continue the game
 					pc::Config.pause = false;
 					pc::sfxeng->ResumeLoopedSound(-1);
-					for (int i = 0; i < p::ccmap->getPlayerPool()->getNumPlayers(); i++){
-						p::ccmap->getPlayerPool()->getPlayer(i)->resumeBuilding();
+					for (int i = 0; i < p::ppool->getNumPlayers(); i++){
+						p::ppool->getPlayer(i)->resumeBuilding();
 					}
 				}
 				break;

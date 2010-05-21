@@ -1,5 +1,6 @@
 // Selection.cpp
-//
+// 1.0
+
 //    This file is part of OpenRedAlert.
 //
 //    OpenRedAlert is free software: you can redistribute it and/or modify
@@ -16,10 +17,11 @@
 
 #include "Selection.h"
 
+#include <cassert>
+#include <cstdlib>
 #include <functional>
 #include <map>
 #include <algorithm>
-#include <exception>
 
 #include "include/Logger.h"
 #include "game/Dispatcher.h"
@@ -29,12 +31,10 @@
 #include "game/UnitOrStructure.h"
 #include "game/Structure.h"
 #include "game/Unit.hpp"
-#include "game/CnCMap.h"
-#include "game/unittypes.h"
 
 namespace p {
 	extern Dispatcher* dispatcher;
-	extern CnCMap* ccmap;
+	extern PlayerPool* ppool;
 }
 extern Logger * logger;
 
@@ -46,16 +46,9 @@ using std::ptr_fun;
 using std::unary_function;
 using std::find_if;
 using std::find;
-using std::exception;
 
-/** @todo Some stuff still uses the "for (i = begin; i != end; ++i)" pattern.
- * @todo Some of the functions in the namespace can be replaced by further STL
- * magic.
- * @todo Rename function names.
- * @todo (Later) Rewrite Selection to be as close to the STL Container concept as useful
- */
-
-namespace {
+namespace
+{
 
 //std::mem_fun_t<void, UnitOrStructure> unref = mem_fun(&UnitOrStructure::unrefer);
 //std::mem_fun_t<void, UnitOrStructure> unsel = mem_fun(&UnitOrStructure::unSelect);
@@ -359,28 +352,23 @@ void Selection::attackStructure(Structure *target)
 
 void Selection::checkSelection()
 {
-	
+	tm		*Tm;
+	time_t  Now_epoch;
+
     //remove_if(sel_units.begin(), sel_units.end(), logical_not(mem_fun(&UnitOrStructure::isAlive)));
 
-    for (list<Unit*>::iterator it = sel_units.begin(); it != sel_units.end(); ++it) 
-    {
-        if (*it == 0)
-        {
-            logger->error("Selection::checkSelection() *it si null");
-            return;
-        }
-        
+    for (list<Unit*>::iterator it = sel_units.begin(); it != sel_units.end(); ++it) {
+        assert(*it != 0);
         if (!(*it)->isAlive()) {
             Unit* unit = *it--;
             purge(unit);
             removeUnit(unit);
 
-            tm		*Tm;
-            time_t  Now_epoch;
 
-            Now_epoch = time(0);
-            Tm = localtime (&Now_epoch);
-            logger->warning ("%s line %i: %02i:%02i:%02i removeUnit (Selection)\n", __FILE__, __LINE__, Tm->tm_hour, Tm->tm_min, Tm->tm_sec);
+			Now_epoch = time(0);
+			Tm = localtime (&Now_epoch);
+			logger->warning ("%s line %i: %02i:%02i:%02i removeUnit (Selection)\n", __FILE__, __LINE__, Tm->tm_hour, Tm->tm_min, Tm->tm_sec);
+
         }
     }
     for (list<Structure*>::iterator it = sel_structs.begin(); it != sel_structs.end(); ++it) {
@@ -441,7 +429,7 @@ bool Selection::loadSelection(Uint8 savepos)
     }
     copySelection(targetsel_units, targetsel_structs, sel_units, sel_structs);
 
-    Uint32 lplayernum = p::ccmap->getPlayerPool()->getLPlayerNum();
+    Uint32 lplayernum = p::ppool->getLPlayerNum();
     for_each(sel_units.begin(), sel_units.end(), postloadproc<Unit>(lplayernum, &enemy_selected, &numattacking));
     for_each(sel_structs.begin(), sel_structs.end(), postloadproc<Structure>(lplayernum, &enemy_selected, &numattacking));
 
@@ -475,56 +463,40 @@ bool Selection::mergeSelection(Uint8 loadpos)
 
 Uint8 Selection::getOwner() const
 {
-    if (sel_units.empty()) 
-    {
-        // Check that something is selected
-        if (sel_structs.empty())
-        {
-            logger->error("[Selection::getOwner()] sel_units and sel_structs internal lists are empty !");
-            throw new exception();
-        }
-        
+    if (sel_units.empty()) {
+        assert(!sel_structs.empty());
         return (*sel_structs.begin())->getOwner();
     }
-
-    // If unit list is not empty retur nthe owner of the first unit
     return (*sel_units.begin())->getOwner();
 }
 
 bool Selection::areWaterBound()
 {
-    // Test if the selection is ENEMY selection
-    if (enemy_selected == true) {
+	UnitType	*UnitType = NULL;
+	Structure	*PrimaryStruct = NULL;
+
+	if (enemy_selected)
+		return false;
+
+    if (sel_units.empty()) {
         return false;
     }
 
-    // Test if the selection IS NOT EMPTY
-    if (sel_units.empty() == true) {
-        return false;
-    }
-
-    for (list<Unit*>::iterator UnitIt = sel_units.begin(); UnitIt != sel_units.end(); ++UnitIt)
-    {
-        //assert(*UnitIt != 0);
+    for (list<Unit*>::iterator UnitIt = sel_units.begin(); UnitIt != sel_units.end(); ++UnitIt) {
+        assert(*UnitIt != 0);
         if (!(*UnitIt)->isAlive())
-            continue;
+			continue;
 
-        // Get the type of the unit
-        //UnitType* theUnitType = dynamic_cast<UnitType*> ((*UnitIt)->getType()->getPType());
-        /*PrimaryStruct = p::ccmap->getPlayerPool()->getPlayer((*UnitIt)->getOwner())->getPrimary(UnitType);
-        if (PrimaryStruct != NULL)
-        {
-            if (!PrimaryStruct->getType()->isWaterBound())
-                return false;
-        }
-        else
-            return false;*/
-        if ((*UnitIt)->getType()->getPType() != UN_BOAT)
-        {
-            return false;
-        }
-    }
-    return true;
+
+		UnitType = (*UnitIt)->getType();
+		PrimaryStruct = p::ppool->getPlayer((*UnitIt)->getOwner())->getPrimary(UnitType);
+		if (PrimaryStruct != NULL){
+			if (!PrimaryStruct->getType()->isWaterBound())
+				return false;
+		}else
+			return false;
+	}
+	return true;
 }
 
 Uint32 Selection::numbUnits() const

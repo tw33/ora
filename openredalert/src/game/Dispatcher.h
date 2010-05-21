@@ -23,8 +23,8 @@
 #include "DispatchLogState.h"
 #include "ConStatus.h"
 
-class UnitType;
 class Unit;
+class UnitType;
 class Structure;
 class StructureType;
 class UnitOrStructure;
@@ -35,12 +35,12 @@ class UnitOrStructureType;
  * 
  * Use to future client/server architecture
  */
-class Dispatcher
+class Dispatcher 
 {
 public:
     Dispatcher();
     ~Dispatcher();
-
+    
     void unitMove(Unit* un, Uint32 dest);
     void unitAttack(Unit* un, UnitOrStructure* target, bool tisunit);
     void unitDeploy(Unit* un);
@@ -66,11 +66,11 @@ public:
     bool unitSpawn(UnitType* type, Uint8 owner);
     bool unitSpawn(const char* tname, Uint8 owner);
     /** Temporary function to place a unit directly on the map */
-    bool unitCreate(const char* tname, Uint32 pos, Uint8 subpos, unsigned int owner);
+    bool unitCreate(const char* tname, Uint32 pos, Uint8 subpos, Uint8 owner);
 
     Uint16 getExitCell(const UnitOrStructureType* type);
     Uint16 getExitCell(Uint8 ptype);
-
+    
 private:
     DispatchLogState logstate;
     Uint8 localPlayer;

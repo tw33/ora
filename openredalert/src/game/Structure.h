@@ -23,11 +23,14 @@
 #include "SDL/SDL_types.h"
 
 #include "UnitOrStructure.h"
+#include "UnitOrStructureType.h"
+#include "StructureType.h"
+#include "Weapon.h"
+#include "UnitType.h"
+#include "Unit.hpp"
 
 using std::string;
 
-class StructureType;
-class UnitType;
 class BuildingAnimEvent;
 class BAttackAnimEvent;
 class BRepairUnitAnimEvent;
@@ -44,7 +47,7 @@ public:
 	friend class BRepairUnitAnimEvent;
 	friend class DoorAnimEvent;
 
-	Structure(StructureType *type, Uint16 cellpos, unsigned int owner, Uint16 rhealth,
+	Structure(StructureType *type, Uint16 cellpos, Uint8 owner, Uint16 rhealth,
 			Uint8 facing, string trigger_name);
 	~Structure();
 
@@ -56,16 +59,14 @@ public:
 	Uint32 getImageNum(Uint8 layer) const;
 	Uint16 getNumbImages(Uint8 layer);
 	void setImageNum(Uint32 num, Uint8 layer);
-	UnitOrStructureType* getType();
+	StructureType* getType();
 	void setStructnum(Uint32 stn);
 	Uint32 getNum() const;
+	Uint16 getPos() const;
 	Uint16 getBPos(Uint16 curpos) const;
 	Uint16 getFreePos(Uint8* subpos, bool findsubpos);
 	void remove();
-
-	unsigned int getPos() const;
-	unsigned int getSubpos() const;
-
+	Uint16 getSubpos() const;
 	void applyDamage(Sint16 amount, Weapon* weap, UnitOrStructure* attacker);
 	void runAnim(Uint32 mode);
 	void runSecAnim(Uint32 param, bool extraParam = false);
@@ -133,11 +134,11 @@ private:
 	Uint32 structnum;
 	Uint16 *imagenumbers;
 
-	unsigned int cellpos;
+	Uint16 cellpos;
 	Uint16 bcellpos;
 	Uint16 health;
 
-	unsigned int owner;
+	Uint8 owner;
 
 	bool damaged;
 	bool animating;
@@ -158,7 +159,7 @@ private:
 	bool bombing;
 
 	UnitType* CreateUnitType;
-	unsigned int CreateUnitOwner;
+	Uint8 CreateUnitOwner;
 	Uint32 UnitToRepairPos;
 	Uint32 LastAttackTick;
 

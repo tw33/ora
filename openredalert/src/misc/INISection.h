@@ -18,19 +18,11 @@
 #ifndef INISECTION_H
 #define INISECTION_H
 
-#include <map>
-#include <string>
+typedef std::vector<IniEntry> INISection;
 
-#include "IniEntry.h"
+/** typedef std::vector<IniEntry> INISection;
+ * @author Damien Carol (OpenRedAlert)*/
+/*class INISection {
 
-using std::map;
-using std::string;
-
-/**
- * @author Damien Carol (OpenRedAlert)
- */
-class INISection : public map<string, string>
-{
-};
-
+};*/
 #endif //INISECTION_H

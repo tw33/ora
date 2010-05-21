@@ -21,7 +21,7 @@ public:
     //quality setting is not supported.
     //ever tried on-the-fly linear or bicubic interpolation on video??
 
-    //Initialize the videoOutputBuffer. Required before the start of scaling a VQA. Only needed once per VQA.
+    //initialise the videoOutputBuffer. Required before the start of scaling a VQA. Only needed once per VQA.
     void closeVideoScale();
     void initVideoScale(SDL_Surface* input, int videoq);
     //The actual scaling function. It will return the image with the size of the screen

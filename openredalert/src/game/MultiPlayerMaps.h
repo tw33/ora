@@ -30,9 +30,9 @@ using std::vector;
 class MultiPlayerMaps
 {
 public:
-    MultiPlayerMaps();
+	MultiPlayerMaps();
     ~MultiPlayerMaps();
-
+    
     bool getMapDescription(unsigned int Index, string & String);
 
     /**
@@ -41,9 +41,7 @@ public:
     bool getMapName(unsigned int Index, string & Name);
 
 private:
-    MultiPlayerMaps(const MultiPlayerMaps& orig);
-
-    /** Name of maps */
+	/** Name of maps */
     vector<string> MapNames;
     /** Description of maps */
     vector<string> MapDescriptions;
@@ -52,9 +50,7 @@ private:
      * Read information of Multi-Player maps from file "missions.pkt" in mix archives. 
      */
     void readMapData();
-
-    /** Function that try to list and load all maps in /data/maps folder **/
-    void loadMapsFolder();
 };
 
 #endif //MULTIPLAYERMAPS_H
+

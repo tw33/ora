@@ -27,7 +27,8 @@ using std::string;
 
 UnitOrStructureType::UnitOrStructureType() :
 	ptype(0),
-	valid(false)
+	valid(false),
+	techLevel(-1)
 {
 }
 
@@ -50,7 +51,7 @@ bool UnitOrStructureType::isValid() const
 	return valid;
 }
 
-vector<string> UnitOrStructureType::getPrereqs() const
+vector < char *> UnitOrStructureType::getPrereqs() const
 {
 	return prereqs;
 }
@@ -63,9 +64,9 @@ int UnitOrStructureType::getTechLevel() const
 	return techLevel;
 }
 
-int UnitOrStructureType::getCost() const
+Uint16 UnitOrStructureType::getCost() const
 {
-    return cost;
+	return cost;
 }
 
 Uint8 UnitOrStructureType::getSpeed() const
@@ -81,74 +82,4 @@ Uint16 UnitOrStructureType::getMaxHealth() const
 Uint8 UnitOrStructureType::getSight() const
 {
 	return sight;
-}
-
-string UnitOrStructureType::getName() const
-{
-    return tname;
-}
-
-void UnitOrStructureType::setName(string pName)
-{
-    this->tname = pName;
-}
-
-/**
- * Return the Primary weapon
- *
- * @return Reference to the primary weapon
- * @see Weapon
- */
-Weapon * UnitOrStructureType::getWeapon() const
-{
-    // Return Reference to the Primary weapon
-    return getWeapon(true);
-}
-
-/**
- * Return the weapon of the structure wanted
- *
- * @param primary if true select the primary weapon else return the secondary
- * @return Reference to the selected weapon
- * @see Weapon
- */
-Weapon * UnitOrStructureType::getWeapon(bool primary) const
-{
-    if (primary)
-    {
-        return this->getPrimaryWeapon();
-    }
-    else
-    {
-        return this->getSecondaryWeapon();
-    }
-}
-
-Weapon* UnitOrStructureType::getPrimaryWeapon() const
-{
-    return this->primary_weapon;
-}
-
-Weapon* UnitOrStructureType::getSecondaryWeapon() const
-{
-    return this->secondary_weapon;
-}
-
-void UnitOrStructureType::setPrimaryWeapon(Weapon* value)
-{
-    if (this->tname == "WEAP")
-    {
-        int a = 0;
-    }
-    this->primary_weapon = value;
-}
-
-void UnitOrStructureType::setSecondaryWeapon(Weapon* value)
-{
-    this->secondary_weapon = value;
-}
-
-void UnitOrStructureType::setCost(int pCost)
-{
-    this->cost = pCost;
 }

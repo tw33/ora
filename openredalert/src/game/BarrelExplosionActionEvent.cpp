@@ -25,7 +25,6 @@
 #include "CnCMap.h"
 #include "UnitAndStructurePool.h"
 #include "Structure.h"
-#include "Unit.hpp"
 
 namespace p {
     extern ActionEventQueue* aequeue;

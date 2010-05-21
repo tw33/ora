@@ -19,7 +19,6 @@
 #define TRIGGERS_H_
 
 #include <string>
-#include <vector>
 
 #include "SDL/SDL_types.h"
 
@@ -243,33 +242,15 @@ class TriggerAction;
 class UnitOrStructure;
 
 using std::string;
-using std::vector;
 
 /**
  * Trigger in RedAlert missions
  */
 class RA_Tiggers
 {
-private:
-     /** Make the constructor private to avoid it **/
-    RA_Tiggers(){
-        // Nothing
-    }
-    /** Make the constructor by copy private to avoid it **/
-    RA_Tiggers(const RA_Tiggers&){
-        
-    }
-
 public:
-    /** **/
-    RA_Tiggers(string pName){
-        // Set the Name
-        this->name = pName;
-    }
-    
-    /** Name of this trigger **/
-    string name;
-    int repeatable;
+    string         		name;
+    int                 repeatable;
     /** which country trigger applies to */
     int                 country;
     /**
@@ -292,18 +273,15 @@ public:
     /** first trigger */
     RA_Tigger           trigger1;
     /** second trigger */
-    RA_Tigger trigger2;
+    RA_Tigger           trigger2;
     /** first trigger action */
-    TriggerAction* action1;
+    TriggerAction*    action1;
     /** second trigger action,  If this trigger has more than
      * one trigger action associated with an event, then the
      * second trigger action is held here.*/
-    TriggerAction* action2;
+    TriggerAction*    action2;
     /** var to remember if the trigger has already been exectured */
-    bool hasexecuted;
-    
-    /** List of Unit or Structure linked */
-    vector<UnitOrStructure*> references;
+	bool				hasexecuted;
 };
 
 
@@ -311,7 +289,7 @@ public:
 //
 // Forward declarations
 //
-void PrintTrigger(const RA_Tiggers& Trigger );
+void PrintTrigger ( RA_Tiggers Trigger );
 void HandleTriggers ( UnitOrStructure *UnitOrStructure, int Event, int param = 0 );
 void HandleGlobalTrigger ( int Event, int param );
 void CheckCellTriggers(unsigned int pos);

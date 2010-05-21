@@ -26,7 +26,7 @@
 #include "SDL/SDL_events.h"
 #include "SDL/SDL_mutex.h"
 
-#include "misc/config.h"
+#include "include/config.h"
 #include "misc/Compression.hpp"
 #include "include/fcnc_endian.h"
 #include "video/GraphicsEngine.h"
@@ -192,7 +192,7 @@ void VQA::VQAMovie::play()
     // create the frame to store the image in.
     frame = SDL_CreateRGBSurface(SDL_SWSURFACE, header.Width, header.Height, 8, 0, 0, 0, 0);
 
-    // Initialize the scaler
+    // Initialise the scaler
     if (scaleVideo){
         scaler.initVideoScale(frame, videoScaleQuality);
     }

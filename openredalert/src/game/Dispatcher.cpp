@@ -1,5 +1,6 @@
 // Dispatcher.cpp
-//
+// 1.0
+
 //    This file is part of OpenRedAlert.
 //
 //    OpenRedAlert is free software: you can redistribute it and/or modify
@@ -20,7 +21,8 @@
 
 #include "ActionEventQueue.h"
 #include "CnCMap.h"
-#include "misc/common.h"
+#include "include/common.h"
+#include "include/config.h"
 #include "include/Logger.h"
 #include "PlayerPool.h"
 #include "Unit.hpp"
@@ -35,7 +37,6 @@ using std::string;
 
 namespace p {
     extern UnitAndStructurePool* uspool;
-    extern CnCMap* ccmap; 
 }
 
 /** 
@@ -45,7 +46,7 @@ namespace p {
  */
 Dispatcher::Dispatcher() :
     logstate(NORMAL),
-    localPlayer(p::ccmap->getPlayerPool()->getLPlayerNum())
+    localPlayer(p::ppool->getLPlayerNum())
 {
 }
 
@@ -194,7 +195,7 @@ bool Dispatcher::unitSpawn(const char* tname, Uint8 owner) {
     return true;
 }
 
-bool Dispatcher::unitCreate(const char* tname, Uint32 pos, Uint8 subpos, unsigned int owner) 
+bool Dispatcher::unitCreate(const char* tname, Uint32 pos, Uint8 subpos, Uint8 owner) 
 {
     switch (logstate) 
     {

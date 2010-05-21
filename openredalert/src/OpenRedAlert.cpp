@@ -1,5 +1,6 @@
 // OpenRedAlert.cpp
-//
+// 1.0
+
 //    This file is part of OpenRedAlert.
 //
 //    OpenRedAlert is free software: you can redistribute it and/or modify
@@ -36,19 +37,13 @@
 #include "video/WSAMovie.h"
 #include "video/WSAError.h"
 
-#include "game/MultiPlayerMaps.h"
-
-#ifndef VERSION
-#define VERSION "6xx"
-#endif
+#define VERSION "439"
 
 using std::abort;
 using std::map;
 using std::set_terminate;
 using std::string;
 using std::runtime_error;
-using std::cout;
-using std::endl;
 
 using Sound::SoundEngine;
 
@@ -72,40 +67,21 @@ namespace pc {
 
 using VQA::VQAMovie;
 
-int main(int argc, char** argv)
-{
-    // Log to the console the GPL license
-    cout << "OpenRedAlert  Copyright (C) 2009  Damien Carol" << endl;
-    cout << "This program comes with ABSOLUTELY NO WARRANTY;" << endl;
-    cout << "This is free software, and you are welcome to redistribute it" << endl;
-    cout << "under certain conditions; see 'COPYING' for details." << endl;
-    cout.flush();
-
-    // Register end functions
+int main(int argc, char** argv) {
     atexit(cleanup);
     set_terminate(fcnc_terminate_handler);
 
     // Correct the way that floats are readed
     setlocale(LC_ALL, "C");
 
-    // Check if help wanted
-    if ((argc > 1) && ( string(argv[1]) == "-h" ||
+    // Loads arguments
+    if ((argc > 1) && ( string(argv[1]) == "-help" ||
             string(argv[1]) == "--help" || string(argv[1]) == "-?"))
     {
         PrintUsage();
         return EXIT_SUCCESS;
     }
-    
-    // Check if version wanted
-    if ((argc > 1) && ( string(argv[1]) == "-v" ||
-            string(argv[1]) == "--version" ))
-    {
-        // Print version
-        printf("openredalert %s", VERSION);
-        return EXIT_SUCCESS;
-    }
 
-    
     const string& binpath = determineBinaryLocation(argv[0]);
     string lf(binpath);
     lf += "/debug.log";
@@ -113,8 +89,6 @@ int main(int argc, char** argv)
     VFSUtils::VFS_PreInit(binpath.c_str());
     // Log level is so that only errors are shown on stdout by default
     logger = new Logger(lf.c_str(), 0);
-    
-    // Loads arguments
     if (!parse(argc, argv)) {
         return 1;
     }
@@ -128,14 +102,6 @@ int main(int argc, char** argv)
     VFSUtils::VFS_LoadGame(pc::Config.gamenum);
     // Log success of loading RA gmae
     logger->note(".MIX archives loading ok\n");
-
-
-    // Test loading multi-player map
-    //logger->note("Test loading multi-player map\n");
-    //MultiPlayerMaps* toto = new MultiPlayerMaps();
-    //
-    //return 0;
-
 
     // Load the start
     logger->note("Please wait, OpenRedAlert %s is starting\n", VERSION);
@@ -156,19 +122,19 @@ int main(int argc, char** argv)
             SDL_ShowCursor(0);
         }
 
-        // Initialize Video
+        // Initialise Video
         try {
-            logger->note("Initializing the graphics engine...");
+            logger->note("Initialising the graphics engine...");
             pc::gfxeng = new GraphicsEngine();
             logger->note("done\n");
         }
         catch (VideoError& ex) {
             logger->note("failed.  %s \n", ex.what());
-            throw runtime_error("Unable to Initialize the graphics engine");
+            throw runtime_error("Unable to initialise the graphics engine");
         }
 
-        // Initialize Sound
-        logger->note("Initializing the sound engine...");
+        // Initialise Sound
+        logger->note("Initialising the sound engine...");
         pc::sfxeng = new SoundEngine(pc::Config.nosound);
         logger->note("done\n");
 
@@ -196,7 +162,7 @@ int main(int argc, char** argv)
 
             try {
                 WSAMovie* choose = new WSAMovie("choose.wsa");
-                choose->animate(*(pc::gfxeng));
+                choose->animate(pc::gfxeng);
             }
             catch (WSAError&) {
             }
@@ -236,8 +202,8 @@ int main(int argc, char** argv)
         pc::gfxeng = 0;
 
         try {
-            // Initialize game engine
-            logger->note("Initializing game engine:\n");
+            // Initialise game engine
+            logger->note("Initialising game engine:\n");
             Game gsession;
             // Start the game engine
             logger->note("Starting game\n");
@@ -264,8 +230,7 @@ int main(int argc, char** argv)
 /**
  * Wraps around a more verbose terminate handler and cleans up better
  */
-void fcnc_terminate_handler() 
-{
+void fcnc_terminate_handler() {
     cleanup();
 
 #if __GNUC__ == 3 && __GNUC_MINOR__ >= 1 && ! defined (__MORPHOS__)
@@ -278,18 +243,14 @@ void fcnc_terminate_handler()
 }
 
 /**
+ *
  */
-void cleanup()
-{
-    if (logger != 0)
-    {
+void cleanup() {
+    if (logger != NULL) {
         delete logger;
     }
-    logger = 0;
+    logger = NULL;
 
-    // Free VFS
     VFSUtils::VFS_Destroy();
-
-    // Free SDL
     SDL_Quit();
 }

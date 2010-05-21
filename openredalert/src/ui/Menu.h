@@ -59,6 +59,7 @@ public:
 	void DrawMenuBackground();
 	void DrawMousePointer();
 	void DrawMainMenuButtons();
+	void HandleInput();
 	int HandleMenu();
 
 	/** Return true if the user selected an option */
@@ -71,8 +72,6 @@ public:
 	bool isProlog() const;
 
 private:
-    void HandleInput();
-
 	void loadPal(const string& paln, SDL_Color *palette);
 	void ResetSideColorButtonStates();
 

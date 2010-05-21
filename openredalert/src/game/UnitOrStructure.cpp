@@ -1,5 +1,6 @@
 // UnitOrStructure.cpp
-//
+// 1.0
+
 //    This file is part of OpenRedAlert.
 //
 //    OpenRedAlert is free software: you can redistribute it and/or modify
@@ -15,6 +16,8 @@
 //    along with OpenRedAlert.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "UnitOrStructure.h"
+
+#include <cassert>
 
 #include "SDL/SDL_types.h"
 
@@ -55,6 +58,7 @@ bool UnitOrStructure::isSelected()
 
 void UnitOrStructure::unrefer()
 {
+	assert(references > 0);
 	if (references > 0)
 	{
 		--references;
@@ -65,15 +69,16 @@ void UnitOrStructure::unrefer()
 	}
 	else
 	{
-		logger->error("%s line %i: Unrefer while not refered \n", __FILE__ , __LINE__);
+		logger->error("%s line %i: Unrefer while not refered \n",__FILE__ , __LINE__);
 	}
 }
 
 UnitOrStructure::~UnitOrStructure()
 {
+	//    assert(references == 0);
 	if (references != 0)
 	{
-		logger->error("%s line %i: References is not 0 \n", __FILE__ , __LINE__);
+		logger->error("%s line %i: References is not 0 \n",__FILE__ , __LINE__);
 	}
 }
 
@@ -119,14 +124,4 @@ Uint16 UnitOrStructure::getHealth() const
 void UnitOrStructure::setHealth(Uint16 health)
 {
 	this->health = health;
-}
-
-unsigned int UnitOrStructure::getOwner() const
-{
-    return this->owner;
-}
-
-void UnitOrStructure::setOwner(unsigned int newowner)
-{
-    this->owner = newowner;
 }

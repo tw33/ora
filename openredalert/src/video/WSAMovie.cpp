@@ -24,7 +24,7 @@
 #include "SDL/SDL_video.h"
 
 #include "Renderer.h"
-#include "misc/config.h"
+#include "include/config.h"
 #include "misc/Compression.hpp"
 #include "include/fcnc_endian.h"
 #include "video/GraphicsEngine.h"
@@ -53,9 +53,8 @@ WSAMovie::~WSAMovie()
 }
 
 /**
- * @param grafEngine Graphic engine to show WSA animation
  */
-void WSAMovie::animate(GraphicsEngine& grafEngine)
+void WSAMovie::animate(GraphicsEngine* grafEngine)
 {
     float fps, delay;
     SDL_Rect dest;
@@ -69,13 +68,13 @@ void WSAMovie::animate(GraphicsEngine& grafEngine)
     frame = 0;
     dest.w = header.width<<1;
     dest.h = header.height<<1;
-    dest.x = (grafEngine.getWidth()-(header.width<<1))>>1;
-    dest.y = (grafEngine.getHeight()-(header.height<<1))>>1;
+    dest.x = (grafEngine->getWidth()-(header.width<<1))>>1;
+    dest.y = (grafEngine->getHeight()-(header.height<<1))>>1;
     fps = static_cast<float>((1024.0 / (float) header.delta) * 1024.0);
     delay = static_cast<float>((1.0 / fps) * 1000.0);
 
     // Clear the screen
-    grafEngine.clearScreen();
+    grafEngine->clearScreen();
     
     // check 
     if (header.NumFrames == 0) {
@@ -89,11 +88,10 @@ void WSAMovie::animate(GraphicsEngine& grafEngine)
         // Decode the frame
         frame = decodeFrame(i);
         // Draw it to the screen
-        grafEngine.drawVQAFrame(scaler.scale(frame,1));
+        grafEngine->drawVQAFrame(scaler.scale(frame,1));
         // Wait a delay
         SDL_Delay((unsigned int)delay);
     }
-    // Release the surface
     SDL_FreeSurface(frame);
 }
 
@@ -127,14 +125,10 @@ SDL_Surface* WSAMovie::decodeFrame(unsigned int framenum)
 }
 
 /**
- * @param movieFileName File name of the WSA movie
+ * @param fname File name of the WSA movie
  */
-WSAMovie::WSAMovie(const string& movieFileName)
+WSAMovie::WSAMovie(const string& fname)
 {
-    string fname = movieFileName;
-    
-    //transform(movieFileName.begin(), movieFileName.end(), )
-    
     // Load the animation file from mix archives
     VFile* wfile = VFSUtils::VFS_Open(fname.c_str());
     // Test if their no file
@@ -149,6 +143,16 @@ WSAMovie::WSAMovie(const string& movieFileName)
     
     // And close
     VFSUtils::VFS_Close(wfile);
+
+
+    // Read which sound needs to be played
+    // @todo change that
+    INIFile* wsa_ini = 0;
+    try {
+        wsa_ini = GetConfig("wsa.ini");
+    } catch(runtime_error&) {
+        throw WSAError("wsa.ini not found.");
+    }
 
 
     // If there are data in this file

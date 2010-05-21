@@ -18,19 +18,20 @@
 #include "SoundEngine.h"
 
 #include <string>
-#include <algorithm>
 
 #include "SoundCacheCleaner.hpp"
 #include "SoundCommon.h"
 #include "SOUND_DECODE_STATE.h"
 #include "include/Logger.h"
+#include "include/config.h"
 
+namespace pc {
+    extern ConfigType Config;
+}
 extern Logger * logger;
 
 using std::string;
 using OpenRedAlert::Sound::SoundCacheCleaner;
-//using Sound::SoundBuffer;
-using std::for_each;
 
 namespace Sound
 {
@@ -341,7 +342,7 @@ void SoundEngine::MusicHook(void* userdata, Uint8* stream, int len)
     bool* musicFinishedPtr = reinterpret_cast<bool*>(userdata);
     if (!*musicFinishedPtr)
     {
-        vector<Uint8> buffer;
+        SampleBuffer buffer;
         Uint32 ret = musicDecoder.Decode(buffer, len);
         if (ret == SOUND_DECODE_COMPLETED) {
             musicDecoder.Close();

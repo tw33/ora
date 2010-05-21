@@ -19,6 +19,7 @@
 #define WSAMOVIE_H
 
 #include <string>
+#include <stdint.h>
 
 #include "SDL/SDL_video.h"
 
@@ -48,7 +49,7 @@ public:
     ~WSAMovie();
 
     /** Launch the animation rendering */
-    void animate(GraphicsEngine& grafEngine);
+    void animate(GraphicsEngine* grafEngine);
 
 private:
     /** Decode one frame */

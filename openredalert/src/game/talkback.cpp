@@ -29,17 +29,15 @@
 #include "audio/SoundEngine.h"
 #include "UnitAndStructurePool.h"
 #include "TalkbackType.h"
-#include "misc/common.h"
+#include "include/common.h"
 
 using std::map;
 using std::string;
 using std::vector;
 
-using Sound::SoundEngine;
-
 namespace pc {
 /** SoundEngine of the game */	
-	extern SoundEngine* sfxeng;
+	extern Sound::SoundEngine* sfxeng;
     extern ConfigType Config;
 }
 extern Logger * logger;
@@ -63,10 +61,12 @@ Talkback::Talkback()
 /**
  */
 void Talkback::load(string talkback, INIFile *tbini)
-{    
+{
+    Uint32 keynum;
+    INIKey key;
+
     //logger->debug("Loading %s\n", talkback.c_str());
     //logger->indent();
-    
     try {
         tbini->readKeyValue(talkback.c_str(), 0);
     } catch(...) {
@@ -75,11 +75,11 @@ void Talkback::load(string talkback, INIFile *tbini)
     }
 
     try {
-        for (int keynum=0;;++keynum)
+        for (keynum=0;;++keynum)
         {
             // Still @todo: stringify rest of code
             char* first;
-            INISection::const_iterator key = tbini->readKeyValue(talkback.c_str(), keynum);
+            key=tbini->readKeyValue(talkback.c_str(), keynum);
             first = stripNumbers(key->first.c_str());
             if (string(first) == "include")
             {
@@ -169,7 +169,7 @@ void Talkback::merge(Talkback *mergee)
 
 TalkbackType Talkback::getTypeNum(string name)
 {
-    // lower the string
+	// lower the string
     transform(name.begin(), name.end(), name.begin(), tolower);
     typedef map<string, TalkbackType>::const_iterator TBCI;
     
@@ -180,4 +180,3 @@ TalkbackType Talkback::getTypeNum(string name)
     }
     return tbtype->second;
 }
-

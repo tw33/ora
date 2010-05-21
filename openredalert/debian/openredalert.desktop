@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Type=Application
+Name=Open Red Alert
+Comment=Real Time Strategy game
+Exec=/usr/games/openredalert
+Icon=redalert
+Categories=Game;
+X-Osso-Type=application/x-executable
+Terminal=false

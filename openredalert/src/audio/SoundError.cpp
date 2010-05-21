@@ -23,17 +23,7 @@
 using std::string;
 using std::runtime_error;
 
-namespace OpenRedAlert
-{
-    
-namespace Sound
-{
-    
 SoundError::SoundError(const string& msg) :
 	std::runtime_error(msg)
 {
-}
-
-}
-
 }

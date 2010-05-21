@@ -27,7 +27,7 @@
 #include "Dispatcher.h"
 #include "video/GraphicsEngine.h"
 #include "PlayerPool.h"
-#include "misc/config.h"
+#include "include/config.h"
 #include "audio/SoundEngine.h"
 #include "audio/SoundError.h"
 #include "game/Ai.h"
@@ -51,25 +51,17 @@
 #include "LoadMapError.h"
 #include "video/VideoError.h"
 #include "game/UnitAndStructurePool.h"
-#include "ui/MapAnimationMenu.hpp"
-#include "TriggerManager.hpp"
-#include "game/Unit.hpp"
 
 using std::string;
 using std::runtime_error;
 using VQA::VQAMovie;
-
-using Sound::SoundEngine;
-using OpenRedAlert::Sound::SoundError;
-using OpenRedAlert::Game::TriggerManager;
-using UI::MapAnimationMenu;
 
 extern Logger * logger;
 
 namespace p
 {
 	extern Dispatcher* dispatcher;
-	extern CnCMap* ccmap;
+	extern PlayerPool * ppool;
 	extern ActionEventQueue* aequeue;
 	extern RedAlertDataLoader * raLoader;
 }
@@ -84,7 +76,7 @@ namespace pc
 	extern ImageCache* imgcache;
 	extern Input* input;
 	extern Sidebar* sidebar;
-	extern SoundEngine* sfxeng;
+	extern Sound::SoundEngine* sfxeng;
 }
 extern MIXFiles * mixfiles;
 
@@ -137,7 +129,7 @@ void Game::InitializeMap(string MapName)
 	{
 		p::ccmap = new CnCMap();
 		p::ccmap->Init(GAME_RA, this->gamemode);
-		p::ccmap->loadMap(MapName, 0);
+		p::ccmap->loadMap(MapName.c_str(), 0);
 	}
 	catch (LoadMapError& ex)
 	{
@@ -170,7 +162,8 @@ void Game::InitializeMap(string MapName)
 		try
 		{
 			// Try to Play the "Brief" Movie
-			string briefMovieName = p::ccmap->getMissionData().brief;
+			string briefMovieName;
+			briefMovieName = string(p::ccmap->getMissionData()->brief);
 			// Check that "Brief" movie is different of "<none>"
 			if (briefMovieName != "<none>")
 			{
@@ -183,7 +176,8 @@ void Game::InitializeMap(string MapName)
 			}
 
 			// Try to Play the "Action" Movie
-			string actionMovieName = p::ccmap->getMissionData().action;
+			string actionMovieName;
+			actionMovieName = p::ccmap->getMissionData()->action;
 			// Check that "Action" movie is different of "<none>
 			if (actionMovieName != "<none>")
 			{
@@ -207,9 +201,9 @@ void Game::InitializeMap(string MapName)
 	/// init the sidebar
 	try
 	{
-		pc::sidebar = new Sidebar(p::ccmap->getPlayerPool()->getLPlayer(),
+		pc::sidebar = new Sidebar(p::ppool->getLPlayer(),
 				pc::gfxeng->getHeight(),
-				p::ccmap->getMissionData().theater.c_str());
+				p::ccmap->getMissionData()->theater);
 	}
 	catch (SidebarError& error)
 	{
@@ -233,31 +227,31 @@ void Game::InitializeMap(string MapName)
  */
 void Game::InitializeGameClasses()
 {
-	/// Initialize the Graphics Engine
+	/// Initialise the Graphics Engine
 	try
 	{
-		logger->note("Initializing the graphics engine...");
+		logger->note("Initialising the graphics engine...");
 		pc::gfxeng = new GraphicsEngine();
 		logger->note("done\n");
 	}
 	catch (VideoError& ex)
 	{
 		logger->note("failed.  %s \n", ex.what());
-		throw runtime_error("Unable to Initialize the graphics engine");
+		throw runtime_error("Unable to initialize the graphics engine");
 	}
 
 	/// Initialize Sound
 	try
 	{
 		logger->note("Initializing the sound engine...");
-		pc::sfxeng = new SoundEngine(pc::Config.nosound);
+		pc::sfxeng = new Sound::SoundEngine(pc::Config.nosound);
 		logger->note("done\n");
 	}
 	catch (SoundError& error)
 	{
 		logger->error("%s\n", error.what());
 		logger->note("failed.  exiting\n");
-		throw runtime_error("Unable to Initialize the sound engine");
+		throw runtime_error("Unable to initialize the sound engine");
 	}
 
 	/// Initialize the VFS file system
@@ -268,13 +262,13 @@ void Game::InitializeGameClasses()
 	// Get the mission maps
 	//pc::MissionsMapdata = new MissionMapsClass();
 
-	// Init the image cache
+	// Initialize the image cache
 	pc::imagepool = new std::vector<SHPImage*>();
 	pc::imgcache->setImagePool(pc::imagepool);
 	//pc::imgcache->setImagePool(new std::vector<SHPImage*>());
 
 
-	/// Init the Data Loader
+	/// Initialize the Data Loader
 	try
 	{
 		logger->note("Initializing the RA Data loader...");
@@ -285,7 +279,7 @@ void Game::InitializeGameClasses()
 	catch (...)
 	{
 		logger->note("failed.  exiting\n");
-		throw runtime_error("Unable to Initialize the RA Data loader");
+		throw runtime_error("Unable to initialise the RA Data loader");
 	}
 
 	// Load the music files (for background music
@@ -605,26 +599,16 @@ void Game::play()
 			{
 				logger->note("%s line %i: Unknown mission type\n",__FILE__ , __LINE__);
 			}
-		}		
-		
-        // Initialize (load) the map
-        InitializeMap(pc::Config.mapname);
-
-        // Start playing the background music
-        if (p::ccmap->getMissionData().theme != "No theme")
-        {
-            pc::sfxeng->PlayTrack(p::ccmap->getMissionData().theme);
-        }
-
-
-		// Play Animation Map
-		if (pc::Config.gamemode == GAME_MODE_SINGLE_PLAYER)
-		{
-			MapAnimationMenu myAnimMenu;
-			// @todo change that to get the good parameters
-           //             myAnimMenu.Play(*(pc::gfxeng), MissionNr, true);
 		}
-		
+
+		// Initialize (load) the map
+		InitializeMap(pc::Config.mapname);
+
+		// Start playing the background music
+		if (p::ccmap->getMissionData()->theme != 0)
+		{
+			pc::sfxeng->PlayTrack(p::ccmap->getMissionData()->theme);
+		}
 
 		// Setup the current game
 		pc::gfxeng->setupCurrentGame();
@@ -633,7 +617,7 @@ void Game::play()
 		if (!pc::Config.UseFogOfWar)
 		{
 			logger->note ("%s line %i: Use no fog of war?\n", __FILE__, __LINE__);
-			p::ccmap->getPlayerPool()->getLPlayer()->setVisBuild(Player::SOB_SIGHT, true);
+			p::ppool->getLPlayer()->setVisBuild(Player::SOB_SIGHT, true);
 		}
 
 		if (p::ccmap->getGameMode() == GAME_MODE_SINGLE_PLAYER)
@@ -646,7 +630,7 @@ void Game::play()
 		{
 			// The following is a hack that sets the location
 			// to the current players location
-			Player *LocalPlayer = p::ccmap->getPlayerPool()->getLPlayer();
+			Player *LocalPlayer = p::ppool->getLPlayer();
 
 			Uint32 StartPos = LocalPlayer->getPlayerStart();
 
@@ -691,10 +675,10 @@ void Game::play()
 		//
 		// main gameloop
 		//
-		pc::ai = new Ai();
+		pc::ai = new Ai;
 		PauseMenu* lPauseMenu = new PauseMenu();
 		// Create the trigger manager
-		TriggerManager lTriggerManager(p::ccmap);
+		//TriggerManager* lTriggerManager = new TriggerManager();
 
 		while (!pc::input->shouldQuit() && !pc::quit)
 		{
@@ -720,17 +704,17 @@ void Game::play()
 			pc::input->handle();
 
 			// Handle the ai
-			//pc::ai->handle();
+			pc::ai->handle();
 
 			// Handle triggers
-			lTriggerManager.handle();
+			//lTriggerManager->h
 			// Handle AiCommand for mission
-			//handleAiCommands();
-			// Handle timing triggers
-			//HandleTiming();
-                        
+			handleAiCommands();
 
-			if (gamemode == GAME_MODE_MULTI_PLAYER)
+			// Handle timing triggers
+			HandleTiming();
+
+			if (gamemode == 2)
 			{
 				// Synchronise events with server
 			}
@@ -742,40 +726,39 @@ void Game::play()
 		pc::sfxeng->StopMusic();
 		pc::sfxeng->StopLoopedSound(-1);
 
-	// Check if it was a single player game
-        if (gamemode == GAME_MODE_SINGLE_PLAYER)
-        {
-            // Get Local Player
-            Player* localPlayer = p::ccmap->getPlayerPool()->getPlayer(p::ccmap->getMissionData().player);            // ? if player won ?
-            if (localPlayer->isVictorious() == true)
-            {
-                missionWon = true;
-                MissionNr++;
-                try
-                {
-                    VQAMovie mov(p::ccmap->getMissionData().winmov.c_str());
-                    mov.play();
-                }
-                catch (runtime_error&)
-                {
-                }
-            }
-            else if (localPlayer->isDefeated() == true) 
-                {
-                    missionWon = false;
-                    try {
-                        VQAMovie mov(p::ccmap->getMissionData().losemov.c_str());
-                        mov.play();
-                    }
-                    catch (runtime_error&)
-                    {}
-                }
-                else
-                {
-                // Game was abborted
-                missionWon = false;
-               }
-	}
+		// Check if it was a single player game
+		if (gamemode == GAME_MODE_SINGLE_PLAYER)
+		{
+			// ? if player won ?
+			if (p::ppool->hasWon())
+			{
+				missionWon = true;
+				MissionNr++;
+				try
+				{
+					VQAMovie *mov = new VQAMovie(p::ccmap->getMissionData()->winmov);
+					mov->play();
+				}
+				catch (runtime_error&)
+				{}
+			}
+			else if (p::ppool->hasLost() )
+			{
+				missionWon = false;
+				try
+				{
+					VQAMovie *mov = new VQAMovie(p::ccmap->getMissionData()->losemov);
+					mov->play();
+				}
+				catch (runtime_error&)
+				{}
+			}
+			else
+			{
+				// Game was abborted
+				missionWon = false;
+			}
+		}
 
 		// Stop all the music
 		pc::sfxeng->StopMusic();
@@ -799,7 +782,7 @@ void Game::play()
 	//delete missions;
 }
 
-/*void Game::HandleTiming()
+void Game::HandleTiming()
 {
 	Uint32 uptime;
 	// get elapsed time
@@ -811,7 +794,7 @@ void Game::play()
 		HandleGlobalTrigger(TRIGGER_EVENT_TIME_ELAPSED, uptime/6);
 		OldUptime = uptime;
 	}
-}*/
+}
 
 /**
  * Prints stats of a game session
@@ -832,11 +815,11 @@ void Game::dumpstats()
 	logger->renderGameMsg(false);
 	logger->gameMsg("Time wasted: %i hour%s%i minute%s%i second%s", h,
 			(h!=1 ? "s " : " "), m, (m!=1 ? "s " : " "), s, (s!=1 ? "s " : " "));
-	for (i = 0; i < p::ccmap->getPlayerPool()->getNumPlayers(); i++)
+	for (i = 0; i < p::ppool->getNumPlayers(); i++)
 	{
-		pl = p::ccmap->getPlayerPool()->getPlayer(i);
+		pl = p::ppool->getPlayer(i);
 		logger->gameMsg("%s\nUnit kills:  %i\n     losses: %i\n"
-			"Structure kills:  %i\n          losses: %i\n", pl->getName().c_str(),
+			"Structure kills:  %i\n          losses: %i\n", pl->getName(),
 				pl->getUnitKills(), pl->getUnitLosses(),
 				pl->getStructureKills(), pl->getStructureLosses());
 	}
@@ -858,7 +841,7 @@ void Game::handleAiCommands()
 				AiCommand* com = unit->aiCommandList[0];
 				//if (com->getId() == 3 || com->getId() == 8)
 				{
-					logger->debug("AICOMMAND MOVE UNIT = %s \n", unit->getType()->getName().c_str());
+					logger->debug("AICOMMAND MOVE UNIT = %s \n", unit->getType()->getTName());
 					Uint32 pos = p::ccmap->getWaypoint(com->getWaypoint());
 					logger->debug("here$-1%d\n", pos);
 					unit->move(pos, true);

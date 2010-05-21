@@ -21,6 +21,7 @@
 #define LOOPEND_TURN
 
 #include <string>
+#include <cassert>
 #include <map>
 #include <vector>
 #include <stack>
@@ -28,8 +29,12 @@
 
 #include "SDL/SDL_types.h"
 
+#include "game/UnitOrStructure.h"
+#include "game/UnitType.h"
 #include "game/TalkbackType.h"
 #include "UnitOrStructure.h"
+#include "UnitType.h"
+//#include "InfantryGroup.h"
 #include "Weapon.h"
 #include "Structure.h"
 #include "TalkbackType.h"
@@ -52,9 +57,6 @@ class InfantryGroup;
 using std::string;
 using std::multimap;
 
-//namespace OpenRedAlert { namespace Game { class UnitType; }}
-//namespace OpenRedAlert { namespace Game { class UnitOrStructureType; }}
-
 /**
  * Unit in game
  */
@@ -70,7 +72,7 @@ public:
     friend class UInfiltrateAnimEvent;
 
     Unit(UnitType *type, Uint16 cellpos, Uint8 subpos, InfantryGroup *group,
-            unsigned int owner, Uint16 rhealth, Uint8 facing, Uint8 action,
+            Uint8 owner, Uint16 rhealth, Uint8 facing, Uint8 action,
             string trigger_name);
     ~Unit();
 
@@ -86,12 +88,11 @@ public:
     Sint8 getYoffset() const; // return yoffset-type->getOffset();
     void setXoffset(Sint8 xo);
     void setYoffset(Sint8 yo);
-    UnitOrStructureType * getType();
+    UnitType * getType();
 
-    unsigned int getPos() const;
-    unsigned int getSubpos() const;
-    
+    Uint16 getPos() const;
     Uint16 getBPos(Uint16 pos) const;
+    Uint16 getSubpos() const;
     Uint32 getNum() const;
     void setUnitnum(Uint32 unum);
 
@@ -109,6 +110,8 @@ public:
     void turn(Uint8 facing, Uint8 layer);
     void stop();
 
+    Uint8 getOwner() const;
+    void setOwner(Uint8 newowner);
     void remove();
     void applyDamage(Sint16 amount, Weapon* weap, UnitOrStructure* attacker);
     void updateDamaged();
@@ -144,6 +147,7 @@ public:
 
     bool GetResourceType(Uint8 Numb, Uint8 *Type);
 
+    bool is(const char *Name);
     Uint32 GetFixStr(void);
 
     Uint16 GetFixPos(void);
@@ -181,6 +185,7 @@ private:
     Uint16 cellpos;
     Uint16 palettenum;
 
+    Uint8 owner;
     Uint8 subpos;
     Sint8 xoffset;
     bool deployed;

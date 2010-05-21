@@ -16,8 +16,6 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	sh autogen.sh
-	./configure --prefix=/usr --bindir=/usr/games
 	touch configure-stamp
 
 
@@ -46,10 +44,15 @@ install: build
 	dh_clean -k 
 	dh_installdirs
 	# Add here commands to install the package into debian/openredalert.
-	$(MAKE) DESTDIR=debian/openredalert install
-	#cp openredalert $(CURDIR)/debian/openredalert/usr/share/games/openra
-	cp -r data/settings $(CURDIR)/debian/openredalert/usr/share/games/openra/data/settings
-	#cp $(CURDIR)/debian/openra $(CURDIR)/debian/openredalert/usr/games
+	cp obj/openredalert debian/openredalert/usr/share/games/openredalert
+	cp -r Debug/data debian/openredalert/usr/share/games/openredalert/
+	cp debian/openra debian/openredalert/usr/games/openredalert
+	chmod +x debian/openredalert/usr/games
+	for i in icons/*.png; do \
+		S=`echo $$i | sed 's/.*-\([0-9]\+\)-icon.png$$/\1x\1/;s/256x256/scalable/'`;\
+		mkdir -p debian/openredalert/usr/share/icons/hicolor/$$S/hildon;\
+		cp $$i debian/openredalert/usr/share/icons/hicolor/$$S/hildon/redalert.png;\
+	done
 
 
 # Build architecture-independent files here.
@@ -63,7 +66,7 @@ binary-arch: build install
 	dh_installchangelogs 
 	dh_installdocs
 	dh_installexamples
-#	dh_install
+	dh_install
 #	dh_installmenu
 #	dh_installdebconf	
 #	dh_installlogrotate
@@ -74,7 +77,7 @@ binary-arch: build install
 #	dh_installinit
 #	dh_installcron
 #	dh_installinfo
-	dh_installman
+#	dh_installman
 	dh_link
 	dh_strip
 	dh_compress

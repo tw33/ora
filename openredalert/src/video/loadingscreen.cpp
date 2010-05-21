@@ -1,5 +1,6 @@
 // LoadingScreen.cpp
-//
+// 1.0
+
 //    This file is part of OpenRedAlert.
 //
 //    OpenRedAlert is free software: you can redistribute it and/or modify
@@ -19,6 +20,7 @@
 #include "SDL/SDL_timer.h"
 #include "SDL/SDL_events.h"
 
+#include "include/config.h"
 #include "video/CPSImage.h"
 #include "video/GraphicsEngine.h"
 #include "include/Logger.h"
@@ -29,8 +31,8 @@
 using std::string;
 
 namespace pc {
-    extern GraphicsEngine * gfxeng;
-    extern MessagePool* msg;
+	extern GraphicsEngine * gfxeng;
+	extern MessagePool* msg;
 }
 extern Logger * logger;
 
@@ -44,7 +46,7 @@ LoadingScreen::LoadingScreen()
     lsmutex = SDL_CreateMutex();
     oldwidth = pc::msg->getWidth();
     try {
-        logo = new CPSImage(string("title.cps"), 1);
+        logo = new CPSImage("title.cps",1);
         pc::msg->setWidth(logo->getImage()->w / 4);
     } catch (ImageNotFound&) {
         logger->error("Couldn't load startup graphic\n");

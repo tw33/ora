@@ -1,5 +1,6 @@
 // SHPImage.cpp
-//
+// 1.0
+
 //    This file is part of OpenRedAlert.
 //
 //    OpenRedAlert is free software: you can redistribute it and/or modify
@@ -30,6 +31,7 @@
 #include "include/Logger.h"
 #include "vfs/vfs.h"
 #include "vfs/VFile.h"
+#include "include/config.h"
 #include "headerformats.h"
 #include "ImageNotFound.h"
 #include "SHPHeader.h"
@@ -37,7 +39,11 @@
 using std::runtime_error;
 using std::string;
 
+namespace pc {
+    extern ConfigType Config;
+}
 extern Logger * logger;
+
 
 /**
  * Constructor, loads a shpfile.

@@ -18,7 +18,6 @@
 #ifndef UNITORSTRUCTURETYPE_H
 #define UNITORSTRUCTURETYPE_H
 
-#include <string>
 #include <vector>
 
 #include "SDL/SDL_types.h"
@@ -29,7 +28,6 @@
 class Weapon;
 
 using std::vector;
-using std::string;
 
 /**
  * UnitOrStructureType is used when you can't or don't need to know whether you are dealing with a unit type or a structure
@@ -57,7 +55,9 @@ public:
 	 */
 	virtual Uint8 getNumLayers() const = 0;
 
-	
+	/** Returns the weapon of the Unit or Structure */
+	virtual Weapon * getWeapon(bool primary) const = 0;
+
 	/** Only applicable to units.  StructureType always returns false. */
 	virtual bool isInfantry() const = 0;
 
@@ -67,8 +67,14 @@ public:
 	/** Only applicable to units.  StructureType always returns zero. */
 	virtual Uint8 getOffset() const = 0;
 
+	/** Returns the internal name, e.g. E1 */
+	virtual const char * getTName() const = 0;
+
+	/** Returns the external name, e.g. Minigunner */
+	virtual const char * getName() const = 0;
+
 	/** Returns the names of the sides that can build this */
-	virtual vector<string> getOwners() const = 0;
+	virtual vector<char *> getOwners() const = 0;
 
 	/** Returns whether the type is valid or not (loaded fully) */
 	virtual bool isValid() const;
@@ -84,13 +90,13 @@ public:
 	virtual bool isStructure() const = 0;
 
 	/** Returns the prerequisites. */
-	vector<string> getPrereqs() const;
+	vector<char*> getPrereqs() const;
 
 	/** Return the technology level required to build this [-1 means can't build] (def=-1)*/
 	int getTechLevel() const;
 
-    /** Cost to build object (in credits).*/
-    int getCost() const;
+	/** Cost to build object (in credits).*/
+	Uint16 getCost() const;
 
 	/** Speed is measured in artitrary units. */
 	Uint8 getSpeed() const;
@@ -101,58 +107,24 @@ public:
 	/** Sight range, in cells (def=1). */
 	Uint8 getSight() const;
 
-    /** Return the internal name of the structure/unit type */
-    string getName() const;
-
-
-    /**
-     * Units and structures can have at most two weapons. Currently any secondary weapons are ignored.
-     * @param primary if true return the first weapon else the second
-     * @todo Write a version that accepts an armour type and returns the weapon that'll cause the most damage.
-     */
-    Weapon* getWeapon(bool primary) const;
-    /** @brief Return by default the primary weapon */
-    Weapon* getWeapon() const;
-
-    Weapon* getPrimaryWeapon() const;
-    Weapon* getSecondaryWeapon() const;
-
 protected:
 	/** Sight of the Unit (in Cell) */
 	Uint8 sight;
 	animinfo_t animinfo;
 	/** Armor of the Unit */
 	armor_t armour;
+	/** Secondary weapon of the Unit */
+	Weapon* secondary_weapon;
+	/** Primary weapon of the Unit */
+	Weapon* primary_weapon;
 	Uint16 maxhealth;
 	Uint8 speed;
+	Uint16 cost;
 	/** Technology level required to build this [-1 means can't build] (default = -1) */
 	int techLevel;
-	vector<string> prereqs;
-
+	vector<char*> prereqs;
+	Uint8 ptype;
 	bool valid;
-
-    
-    void setName(string pName);
-
-    void setPrimaryWeapon(Weapon* theWeapon);
-    void setSecondaryWeapon(Weapon* theWeapon);
-    void setCost(int pCost);
-
-private:
-    UnitOrStructureType(const UnitOrStructureType& orig);
-
-    Uint8 ptype;
-    /** Name of the Type */
-    string tname;
-
-    /** Secondary weapon of the Unit */
-    Weapon* secondary_weapon;
-
-    /** Primary weapon of the Unit */
-    Weapon* primary_weapon;
-    
-    /** Coest of the unit or structure */
-    int cost;
 };
 
 #endif //UNITORSTRUCTURETYPE_H
