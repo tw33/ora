@@ -1,0 +1,15 @@
+#!/bin/sh
+# postrm script for drnoksnes
+#
+# see: dh_installdeb(1)
+
+set -e
+
+if [ -L /opt/maemo/usr/share/games/openredalert/data/mix ]; then
+	rm /opt/maemo/usr/share/games/openredalert/data/mix
+fi
+
+#DEBHELPER#
+
+exit 0
+

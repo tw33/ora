@@ -17,6 +17,18 @@ Description: Real Time Strategy game.
  engine you need the original game (mix files).
 XSBC-Bugtracker: http://github.com/smokku/ora/issues
 XB-Maemo-Display-Name: Open Red Alert
+XB-Maemo-Upgrade-Description: Data installation instructions:
+ Download RedAlert1_SovietDisc.rar and RedAlert1_AlliedDisc.rar
+ from http://www.commandandconquer.com/classic
+ .
+ Put the following files in /home/user/MyDocs/Games/RedAlert directory:
+ .
+ From RedAlert1_AlliedDisc/RedAlert1_AlliedDisc/CD1_ALLIED_DISC.ISO:
+ INSTALL/REDALERT.MIX as REDALERT.MIX
+ MAIN.MIX as MAIN.MIX
+ .
+ From RedAlert1_SovietDisc/RedAlert1_SovietDisc/CD2_SOVIET_DISC.ISO:
+ MAIN.MIX as RUSSIAN.MIX
 XB-Maemo-Icon-26:
  iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAU0ElEQVR42sVa
  CXBd5XU+525v1b5LliXbsupNxjsEAhhoWUqggFM60zTtlMBMxoS2dIEkTNLQ

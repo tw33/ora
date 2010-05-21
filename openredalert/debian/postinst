@@ -1,0 +1,30 @@
+#!/bin/sh
+# postinst script for drnoksnes
+#
+# see: dh_installdeb(1)
+
+set -e
+
+case "$1" in
+    configure)
+	if [ ! -L /opt/maemo/usr/share/games/openredalert/data/mix ]; then
+		mkdir -p /home/user/MyDocs/Games/RedAlert
+		mv -f /opt/maemo/usr/share/games/openredalert/data/mix/* /home/user/MyDocs/Games/RedAlert/ || true
+		rmdir /opt/maemo/usr/share/games/openredalert/data/mix
+		ln -s /home/user/MyDocs/Games/RedAlert /opt/maemo/usr/share/games/openredalert/data/mix
+	fi
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \$1" >&2
+        exit 1
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0
+

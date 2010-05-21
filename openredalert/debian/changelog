@@ -1,6 +1,7 @@
 openredalert (r534-1) fremantle; urgency=low
 
   * Imported r534 SVN OpenRedAlert source
+  * Using /home/user/MyDocs/Games/RedAlert to store MIX files
 
- -- Tomasz Sterna <tomek@xiaoka.com>  Fri, 21 May 2010 12:42:41 +0200
+ -- Tomasz Sterna <tomek@xiaoka.com>  Fri, 21 May 2010 16:28:33 +0200
 
